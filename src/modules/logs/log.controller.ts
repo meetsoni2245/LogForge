@@ -33,10 +33,16 @@ export async function createLogController(
 }
 
 export async function getLogsController(
-    _req: Request,
+    req: Request,
     res: Response,
 ): Promise<void> {
-    const logs = await getLogsService({});
+    const page = Number(req.query.page ?? 1);
+    const limit = Number(req.query.limit ?? 20);
+
+    const logs = await getLogsService({
+        page,
+        limit,
+    });
 
     res.status(200).json({
         success: true,
