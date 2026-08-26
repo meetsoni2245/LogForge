@@ -7,3 +7,4 @@ export const createLogSchema = z.object({
 });
 
 export type CreateLogInput = z.infer<typeof createLogSchema>;
+export const logLevelSchema = z.enum(["INFO", "WARN", "ERROR"]);

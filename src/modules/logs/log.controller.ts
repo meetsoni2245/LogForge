@@ -1,11 +1,13 @@
 import type { Request, Response } from "express";
+import { LogLevel } from "../../generated/prisma/enums.js";
+import { createLogSchema, logLevelSchema } from "./log.validation.js";
 import {
     createLogService,
     deleteLogService,
     getLogByIdService,
     getLogsService,
 } from "./log.service.js";
-import { createLogSchema } from "./log.validation.js";
+
 
 export async function createLogController(
     req: Request,
@@ -38,10 +40,32 @@ export async function getLogsController(
 ): Promise<void> {
     const page = Number(req.query.page ?? 1);
     const limit = Number(req.query.limit ?? 20);
+    const levelValue = req.query.level
+        ? String(req.query.level).toUpperCase()
+        : undefined;
+
+    const parsedLevel = levelValue
+        ? logLevelSchema.safeParse(levelValue)
+        : undefined;
+
+    if (parsedLevel && !parsedLevel.success) {
+        res.status(400).json({
+            success: false,
+            error: {
+                message: "Invalid log level",
+            },
+        });
+        return;
+    }
+
+    const level = parsedLevel?.data
+        ? LogLevel[parsedLevel.data]
+        : undefined;
 
     const logs = await getLogsService({
         page,
         limit,
+        level,
     });
 
     res.status(200).json({
