@@ -43,6 +43,32 @@ export async function getLogsController(
     const search = req.query.search
         ? String(req.query.search).trim()
         : undefined;
+    const from = req.query.from
+        ? new Date(String(req.query.from))
+        : undefined;
+
+    const to = req.query.to
+        ? new Date(String(req.query.to))
+        : undefined;
+    if (from && Number.isNaN(from.getTime())) {
+        res.status(400).json({
+            success: false,
+            error: {
+                message: "Invalid from date",
+            },
+        });
+        return;
+    }
+
+    if (to && Number.isNaN(to.getTime())) {
+        res.status(400).json({
+            success: false,
+            error: {
+                message: "Invalid to date",
+            },
+        });
+        return;
+    }
     const levelValue = req.query.level
         ? String(req.query.level).toUpperCase()
         : undefined;
@@ -70,6 +96,8 @@ export async function getLogsController(
         limit,
         level,
         search,
+        from,
+        to,
     });
 
     res.status(200).json({
