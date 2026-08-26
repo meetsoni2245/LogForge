@@ -12,6 +12,8 @@ export interface LogFilters {
     search?: string;
     from?: Date;
     to?: Date;
+    page?: number;
+    limit?: number;
 }
 
 export async function createLog(data: CreateLogData) {
@@ -44,6 +46,8 @@ export async function findLogs(filters: LogFilters) {
         orderBy: {
             timestamp: "desc",
         },
+        skip: ((filters.page ?? 1) - 1) * (filters.limit ?? 20),
+        take: filters.limit ?? 20,
     });
 }
 
