@@ -40,6 +40,9 @@ export async function getLogsController(
 ): Promise<void> {
     const page = Number(req.query.page ?? 1);
     const limit = Number(req.query.limit ?? 20);
+    const search = req.query.search
+        ? String(req.query.search).trim()
+        : undefined;
     const levelValue = req.query.level
         ? String(req.query.level).toUpperCase()
         : undefined;
@@ -66,6 +69,7 @@ export async function getLogsController(
         page,
         limit,
         level,
+        search,
     });
 
     res.status(200).json({
