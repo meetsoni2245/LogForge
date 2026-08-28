@@ -5,6 +5,7 @@ import {
     deleteLogService,
     getLogByIdService,
     getLogsService,
+    getStatsService,
 } from "./log.service.js";
 
 
@@ -114,3 +115,16 @@ export async function deleteLogController(
         },
     });
 }
+
+export async function getStatsController(
+    _: Request,
+    res: Response,
+): Promise<void> {
+    const stats = await getStatsService();
+
+    res.status(200).json({
+        success: true,
+        data: stats,
+    });
+}
+

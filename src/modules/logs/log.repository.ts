@@ -64,3 +64,20 @@ export async function deleteLog(id: string) {
         where: { id },
     });
 }
+
+export async function getLogStats() {
+    const [totalLogs, logLevels] = await Promise.all([
+        prisma.log.count(),
+        prisma.log.groupBy({
+            by: ["level"],
+            _count: {
+                _all: true,
+            },
+        }),
+    ]);
+
+    return {
+        totalLogs,
+        logLevels,
+    };
+}

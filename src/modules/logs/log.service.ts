@@ -3,6 +3,7 @@ import {
     deleteLog,
     findLogById,
     findLogs,
+    getLogStats,
     type CreateLogData,
     type LogFilters,
 } from "./log.repository.js";
@@ -21,4 +22,8 @@ export async function getLogByIdService(id: string) {
 
 export async function deleteLogService(id: string) {
     return deleteLog(id);
+}
+
+export async function getStatsService() {
+    return getLogStats();
 }
