@@ -40,6 +40,27 @@ export async function getLogsController(
 ): Promise<void> {
     const page = Number(req.query.page ?? 1);
     const limit = Number(req.query.limit ?? 20);
+
+    if (!Number.isInteger(page) || page < 1) {
+        res.status(400).json({
+            success: false,
+            error: {
+                message: "Page must be a positive integer",
+            },
+        });
+        return;
+    }
+
+    if (!Number.isInteger(limit) || limit < 1) {
+        res.status(400).json({
+            success: false,
+            error: {
+                message: "Limit must be a positive integer",
+            },
+        });
+        return;
+    }
+
     const search = req.query.search
         ? String(req.query.search).trim()
         : undefined;
