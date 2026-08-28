@@ -7,6 +7,7 @@ import {
     type CreateLogData,
     type LogFilters,
 } from "./log.repository.js";
+import type { LogLevel } from "../../generated/prisma/enums.js";
 
 export async function createLogService(data: CreateLogData) {
     return createLog(data);
@@ -25,5 +26,19 @@ export async function deleteLogService(id: string) {
 }
 
 export async function getStatsService() {
-    return getLogStats();
+    const stats = await getLogStats();
+    const byLevel: Record<LogLevel, number> = {
+        INFO: 0,
+        WARN: 0,
+        ERROR: 0,
+    };
+
+    for (const logLevel of stats.logLevels) {
+        byLevel[logLevel.level] = logLevel._count._all;
+    }
+
+    return {
+        totalLogs: stats.totalLogs,
+        byLevel,
+    };
 }
