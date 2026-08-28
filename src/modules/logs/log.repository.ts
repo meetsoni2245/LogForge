@@ -23,26 +23,28 @@ export async function createLog(data: CreateLogData) {
 }
 
 export async function findLogs(filters: LogFilters) {
-    return prisma.log.findMany({
-        where: {
-            ...(filters.level && {
-                level: filters.level,
-            }),
-            ...(filters.search && {
-                message: {
-                    contains: filters.search,
-                    mode: "insensitive",
+    const where = {
+        ...(filters.level && {
+            level: filters.level,
+        }),
+        ...(filters.search && {
+            message: {
+                contains: filters.search,
+                mode: "insensitive" as const,
+            },
+        }),
+        ...(filters.from || filters.to
+            ? {
+                timestamp: {
+                    ...(filters.from && { gte: filters.from }),
+                    ...(filters.to && { lte: filters.to }),
                 },
-            }),
-            ...(filters.from || filters.to
-                ? {
-                    timestamp: {
-                        ...(filters.from && { gte: filters.from }),
-                        ...(filters.to && { lte: filters.to }),
-                    },
-                }
-                : {}),
-        },
+            }
+            : {}),
+    };
+
+    return prisma.log.findMany({
+        where,
         orderBy: {
             timestamp: "desc",
         },
