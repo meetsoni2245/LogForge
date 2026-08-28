@@ -1,6 +1,5 @@
 import type { Request, Response } from "express";
-import { LogLevel } from "../../generated/prisma/enums.js";
-import { createLogSchema, logLevelSchema } from "./log.validation.js";
+import { createLogSchema, getLogsQuerySchema } from "./log.validation.js";
 import {
     createLogService,
     deleteLogService,
@@ -38,79 +37,20 @@ export async function getLogsController(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const page = Number(req.query.page ?? 1);
-    const limit = Number(req.query.limit ?? 20);
+    const parsedQuery = getLogsQuerySchema.safeParse(req.query);
 
-    if (!Number.isInteger(page) || page < 1) {
+    if (!parsedQuery.success) {
         res.status(400).json({
             success: false,
             error: {
-                message: "Page must be a positive integer",
+                message: "Invalid query parameters",
+                details: parsedQuery.error.flatten(),
             },
         });
         return;
     }
 
-    if (!Number.isInteger(limit) || limit < 1) {
-        res.status(400).json({
-            success: false,
-            error: {
-                message: "Limit must be a positive integer",
-            },
-        });
-        return;
-    }
-
-    const search = req.query.search
-        ? String(req.query.search).trim()
-        : undefined;
-    const from = req.query.from
-        ? new Date(String(req.query.from))
-        : undefined;
-
-    const to = req.query.to
-        ? new Date(String(req.query.to))
-        : undefined;
-    if (from && Number.isNaN(from.getTime())) {
-        res.status(400).json({
-            success: false,
-            error: {
-                message: "Invalid from date",
-            },
-        });
-        return;
-    }
-
-    if (to && Number.isNaN(to.getTime())) {
-        res.status(400).json({
-            success: false,
-            error: {
-                message: "Invalid to date",
-            },
-        });
-        return;
-    }
-    const levelValue = req.query.level
-        ? String(req.query.level).toUpperCase()
-        : undefined;
-
-    const parsedLevel = levelValue
-        ? logLevelSchema.safeParse(levelValue)
-        : undefined;
-
-    if (parsedLevel && !parsedLevel.success) {
-        res.status(400).json({
-            success: false,
-            error: {
-                message: "Invalid log level",
-            },
-        });
-        return;
-    }
-
-    const level = parsedLevel?.data
-        ? LogLevel[parsedLevel.data]
-        : undefined;
+    const { page, limit, level, search, from, to } = parsedQuery.data;
 
     const logs = await getLogsService({
         page,
