@@ -1,6 +1,8 @@
 import express from "express";
 import logRoutes from "./modules/logs/log.routes.js";
-import errorMiddleware from "./middleware/error.middleware.js";
+import errorMiddleware, {
+    notFoundMiddleware,
+} from "./middleware/error.middleware.js";
 
 const app = express();
 
@@ -13,6 +15,7 @@ app.get("/health", (_req, res) => {
     service: "LogForge",
   });
 });
+app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 
 export default app;
