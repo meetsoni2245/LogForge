@@ -25,8 +25,10 @@ export async function deleteLogService(id: string) {
     return deleteLog(id);
 }
 
-export async function getStatsService() {
-    const stats = await getLogStats();
+export async function getStatsService(
+    filters: Pick<LogFilters, "from" | "to"> = {},
+) {
+    const stats = await getLogStats(filters);
     const byLevel: Record<LogLevel, number> = {
         INFO: 0,
         WARN: 0,

@@ -20,3 +20,13 @@ export const getLogsQuerySchema = z.object({
     from: z.coerce.date().optional(),
     to: z.coerce.date().optional(),
 });
+
+export const getStatsQuerySchema = z
+    .object({
+        from: z.coerce.date().optional(),
+        to: z.coerce.date().optional(),
+    })
+    .refine(
+        ({ from, to }) => !from || !to || from <= to,
+        "The from date must be earlier than or equal to the to date",
+    );

@@ -65,11 +65,23 @@ export async function deleteLog(id: string) {
     });
 }
 
-export async function getLogStats() {
+export async function getLogStats(
+    filters: Pick<LogFilters, "from" | "to"> = {},
+) {
+    const where = filters.from || filters.to
+        ? {
+            timestamp: {
+                ...(filters.from && { gte: filters.from }),
+                ...(filters.to && { lte: filters.to }),
+            },
+        }
+        : undefined;
+
     const [totalLogs, logLevels] = await Promise.all([
-        prisma.log.count(),
+        prisma.log.count({ where }),
         prisma.log.groupBy({
             by: ["level"],
+            where,
             _count: {
                 _all: true,
             },

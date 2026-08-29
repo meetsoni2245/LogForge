@@ -1,5 +1,9 @@
 import type { Request, Response } from "express";
-import { createLogSchema, getLogsQuerySchema } from "./log.validation.js";
+import {
+    createLogSchema,
+    getLogsQuerySchema,
+    getStatsQuerySchema,
+} from "./log.validation.js";
 import {
     createLogService,
     deleteLogService,
@@ -117,10 +121,23 @@ export async function deleteLogController(
 }
 
 export async function getStatsController(
-    _: Request,
+    req: Request,
     res: Response,
 ): Promise<void> {
-    const stats = await getStatsService();
+    const parsedQuery = getStatsQuerySchema.safeParse(req.query);
+
+    if (!parsedQuery.success) {
+        res.status(400).json({
+            success: false,
+            error: {
+                message: "Invalid query parameters",
+                details: parsedQuery.error.flatten(),
+            },
+        });
+        return;
+    }
+
+    const stats = await getStatsService(parsedQuery.data);
 
     res.status(200).json({
         success: true,
