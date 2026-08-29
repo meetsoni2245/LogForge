@@ -57,7 +57,7 @@ export async function getLogsController(
 
     const { page, limit, level, search, from, to } = parsedQuery.data;
 
-    const logs = await getLogsService({
+    const result = await getLogsService({
         page,
         limit,
         level,
@@ -68,7 +68,8 @@ export async function getLogsController(
 
     res.status(200).json({
         success: true,
-        data: logs,
+        data: result.logs,
+        pagination: result.pagination,
     });
 }
 

@@ -14,7 +14,19 @@ export async function createLogService(data: CreateLogData) {
 }
 
 export async function getLogsService(filters: LogFilters) {
-    return findLogs(filters);
+    const { logs, total } = await findLogs(filters);
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 20;
+
+    return {
+        logs,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+        },
+    };
 }
 
 export async function getLogByIdService(id: string) {
