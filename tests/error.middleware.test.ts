@@ -4,10 +4,12 @@ import request from "supertest";
 import app from "../src/app.js";
 import AppError from "../src/errors/app.error.js";
 import errorMiddleware from "../src/middleware/error.middleware.js";
+import requestIdMiddleware from "../src/middleware/request.id.middleware.js";
 
 function createErrorTestApp() {
     const testApp = express();
 
+    testApp.use(requestIdMiddleware);
     testApp.get("/known-error", (_req, _res, next) => {
         next(new AppError(422, "The request cannot be processed", {
             field: "message",
@@ -26,12 +28,13 @@ describe("centralized HTTP error handling", () => {
         const response = await request(createErrorTestApp()).get("/known-error");
 
         expect(response.status).toBe(422);
-        expect(response.body).toEqual({
+        expect(response.body).toMatchObject({
             success: false,
             error: {
                 message: "The request cannot be processed",
                 code: "REQUEST_INVALID",
                 details: { field: "message" },
+                requestId: response.headers["x-request-id"],
             },
         });
     });
@@ -40,9 +43,12 @@ describe("centralized HTTP error handling", () => {
         const response = await request(createErrorTestApp()).get("/unexpected-error");
 
         expect(response.status).toBe(500);
-        expect(response.body).toEqual({
+        expect(response.body).toMatchObject({
             success: false,
-            error: { message: "Internal server error" },
+            error: {
+                message: "Internal server error",
+                requestId: response.headers["x-request-id"],
+            },
         });
         expect(JSON.stringify(response.body)).not.toContain("database");
         expect(JSON.stringify(response.body)).not.toContain("secret");
@@ -52,11 +58,12 @@ describe("centralized HTTP error handling", () => {
         const response = await request(app).get("/route-that-does-not-exist");
 
         expect(response.status).toBe(404);
-        expect(response.body).toEqual({
+        expect(response.body).toMatchObject({
             success: false,
             error: {
                 message: "Route not found",
                 code: "NOT_FOUND",
+                requestId: response.headers["x-request-id"],
             },
         });
     });

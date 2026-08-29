@@ -3,10 +3,12 @@ import logRoutes from "./modules/logs/log.routes.js";
 import errorMiddleware, {
     notFoundMiddleware,
 } from "./middleware/error.middleware.js";
+import requestIdMiddleware from "./middleware/request.id.middleware.js";
 import requestLoggingMiddleware from "./middleware/request.logging.middleware.js";
 
 const app = express();
 
+app.use(requestIdMiddleware);
 app.use(express.json());
 app.use(requestLoggingMiddleware);
 

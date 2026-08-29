@@ -6,6 +6,7 @@ interface RequestLogEntry {
     path: string;
     statusCode: number;
     durationMs: number;
+    requestId: string;
 }
 
 const requestLoggingMiddleware: RequestHandler = (req, res, next) => {
@@ -18,6 +19,7 @@ const requestLoggingMiddleware: RequestHandler = (req, res, next) => {
             path: req.path,
             statusCode: res.statusCode,
             durationMs: Math.max(0, Date.now() - startedAt),
+            requestId: req.requestId,
         };
 
         console.log(JSON.stringify(entry));

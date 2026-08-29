@@ -11,11 +11,13 @@ import request from "supertest";
 import errorMiddleware, {
     notFoundMiddleware,
 } from "../src/middleware/error.middleware.js";
+import requestIdMiddleware from "../src/middleware/request.id.middleware.js";
 import requestLoggingMiddleware from "../src/middleware/request.logging.middleware.js";
 
 function createRequestLoggingTestApp() {
     const testApp = express();
 
+    testApp.use(requestIdMiddleware);
     testApp.use(express.json());
     testApp.use(requestLoggingMiddleware);
     testApp.get("/success", (_req, res) => {
@@ -56,6 +58,7 @@ describe("HTTP request logging middleware", () => {
             path: "/success",
             statusCode: 200,
             durationMs: expect.any(Number),
+            requestId: expect.any(String),
         });
         expect(JSON.parse(String(consoleLogSpy.mock.calls[0][0])).durationMs).toBeGreaterThanOrEqual(0);
     });
@@ -87,6 +90,7 @@ describe("HTTP request logging middleware", () => {
             method: "GET",
             path: "/missing",
             statusCode: 404,
+            requestId: expect.any(String),
         });
     });
 
@@ -98,7 +102,13 @@ describe("HTTP request logging middleware", () => {
             method: "GET",
             path: "/unexpected-error",
             statusCode: 500,
+            requestId: expect.any(String),
         });
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                message: "unexpected internal failure",
+            }),
+        );
     });
 
     it("produces exactly one request log per request", async () => {

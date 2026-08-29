@@ -7,7 +7,7 @@ export const notFoundMiddleware: RequestHandler = (_req, _res, next) => {
 
 const errorMiddleware: ErrorRequestHandler = (
     err,
-    _req,
+    req,
     res,
     next,
 ) => {
@@ -21,8 +21,10 @@ const errorMiddleware: ErrorRequestHandler = (
             message: string;
             code?: string;
             details?: unknown;
+            requestId: string;
         } = {
             message: err.message,
+            requestId: req.requestId,
         };
 
         if (err.code !== undefined) {
@@ -45,6 +47,7 @@ const errorMiddleware: ErrorRequestHandler = (
         success: false,
         error: {
             message: "Internal server error",
+            requestId: req.requestId,
         },
     });
 };
