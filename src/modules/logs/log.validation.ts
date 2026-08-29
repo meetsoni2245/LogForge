@@ -7,6 +7,11 @@ export const createLogSchema = z.object({
 });
 
 export type CreateLogInput = z.infer<typeof createLogSchema>;
+
+export const bulkCreateLogsSchema = z.object({
+    logs: z.array(createLogSchema).min(1).max(100),
+});
+
 export const logLevelSchema = z.enum(["INFO", "WARN", "ERROR"]);
 export const getLogsQuerySchema = z.object({
     page: z.coerce.number().int().min(1).default(1),

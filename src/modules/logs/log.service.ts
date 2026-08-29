@@ -1,5 +1,6 @@
 import {
     createLog,
+    createLogs,
     deleteLog,
     findLogById,
     findLogs,
@@ -11,6 +12,10 @@ import type { LogLevel } from "../../generated/prisma/enums.js";
 
 export async function createLogService(data: CreateLogData) {
     return createLog(data);
+}
+
+export async function createLogsService(data: CreateLogData[]) {
+    return createLogs(data);
 }
 
 export async function getLogsService(filters: LogFilters) {

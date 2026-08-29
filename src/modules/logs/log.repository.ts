@@ -22,6 +22,14 @@ export async function createLog(data: CreateLogData) {
     });
 }
 
+export async function createLogs(data: CreateLogData[]) {
+    const result = await prisma.log.createMany({
+        data,
+    });
+
+    return result.count;
+}
+
 export async function findLogs(filters: LogFilters) {
     const where = {
         ...(filters.level && {

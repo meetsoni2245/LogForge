@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+    createLogsController,
     createLogController,
     deleteLogController,
     getLogByIdController,
@@ -10,6 +11,7 @@ import {
 const router = Router();
 
 router.post("/", createLogController);
+router.post("/bulk", createLogsController);
 router.get("/", getLogsController);
 router.get("/stats", getStatsController);
 router.get("/:id", getLogByIdController);

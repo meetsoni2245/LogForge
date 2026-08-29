@@ -1,10 +1,12 @@
 import type { Request, Response } from "express";
 import {
+    bulkCreateLogsSchema,
     createLogSchema,
     getLogsQuerySchema,
     getStatsQuerySchema,
 } from "./log.validation.js";
 import {
+    createLogsService,
     createLogService,
     deleteLogService,
     getLogByIdService,
@@ -35,6 +37,33 @@ export async function createLogController(
     res.status(201).json({
         success: true,
         data: log,
+    });
+}
+
+export async function createLogsController(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const parsed = bulkCreateLogsSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+        res.status(400).json({
+            success: false,
+            error: {
+                message: "Invalid bulk log data",
+                details: parsed.error.flatten(),
+            },
+        });
+        return;
+    }
+
+    const created = await createLogsService(parsed.data.logs);
+
+    res.status(201).json({
+        success: true,
+        data: {
+            created,
+        },
     });
 }
 
