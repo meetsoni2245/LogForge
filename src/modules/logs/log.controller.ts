@@ -27,6 +27,7 @@ export async function createLogController(
             error: {
                 message: "Invalid log data",
                 details: parsed.error.flatten(),
+                requestId: req.requestId,
             },
         });
         return;
@@ -52,6 +53,7 @@ export async function createLogsController(
             error: {
                 message: "Invalid bulk log data",
                 details: parsed.error.flatten(),
+                requestId: req.requestId,
             },
         });
         return;
@@ -79,6 +81,7 @@ export async function getLogsController(
             error: {
                 message: "Invalid query parameters",
                 details: parsedQuery.error.flatten(),
+                requestId: req.requestId,
             },
         });
         return;
@@ -113,6 +116,7 @@ export async function getLogByIdController(
             success: false,
             error: {
                 message: "Log not found",
+                requestId: req.requestId,
             },
         });
         return;
@@ -135,6 +139,7 @@ export async function deleteLogController(
             success: false,
             error: {
                 message: "Log not found",
+                requestId: req.requestId,
             },
         });
         return;
@@ -162,6 +167,7 @@ export async function getStatsController(
             error: {
                 message: "Invalid query parameters",
                 details: parsedQuery.error.flatten(),
+                requestId: req.requestId,
             },
         });
         return;

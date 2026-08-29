@@ -81,7 +81,10 @@ describe("Logs HTTP API integration", () => {
             expect(response.status).toBe(400);
             expect(response.body).toMatchObject({
                 success: false,
-                error: { message: "Invalid log data" },
+                error: {
+                    message: "Invalid log data",
+                    requestId: response.headers["x-request-id"],
+                },
             });
         });
     });
@@ -117,6 +120,7 @@ describe("Logs HTTP API integration", () => {
             expect(response.status).toBe(400);
             expect(response.body.success).toBe(false);
             expect(response.body.error.message).toBe("Invalid bulk log data");
+            expect(response.body.error.requestId).toBe(response.headers["x-request-id"]);
         });
     });
 
@@ -203,7 +207,10 @@ describe("Logs HTTP API integration", () => {
             expect(response.status).toBe(400);
             expect(response.body).toMatchObject({
                 success: false,
-                error: { message: "Invalid query parameters" },
+                error: {
+                    message: "Invalid query parameters",
+                    requestId: response.headers["x-request-id"],
+                },
             });
         });
     });
@@ -237,7 +244,10 @@ describe("Logs HTTP API integration", () => {
             expect(response.status).toBe(404);
             expect(response.body).toEqual({
                 success: false,
-                error: { message: "Log not found" },
+                error: {
+                    message: "Log not found",
+                    requestId: response.headers["x-request-id"],
+                },
             });
         });
     });
