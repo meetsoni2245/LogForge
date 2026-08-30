@@ -10,6 +10,9 @@ import {
 import request from "supertest";
 import app from "../src/app.js";
 import prisma from "../src/config/database.js";
+import { createAuthToken } from "../src/modules/auth/auth.token.js";
+
+const testAuthToken = createAuthToken({ userId: "test-user-id", username: "testuser" });
 
 const testPrefix = "__logforge_api_integration_test__";
 const baseTimestamp = "2099-07-15T12:00:00.000Z";
@@ -58,7 +61,10 @@ describe("Logs HTTP API integration", () => {
         it("creates a valid log and returns 201 with the success/data response", async () => {
             const log = makeLog("create", "INFO");
 
-            const response = await request(app).post("/api/logs").send(log);
+            const response = await request(app)
+                .post("/api/logs")
+                .set("Authorization", `Bearer ${testAuthToken}`)
+                .send(log);
 
             expect(response.status).toBe(201);
             expect(response.body).toMatchObject({
@@ -73,10 +79,13 @@ describe("Logs HTTP API integration", () => {
         });
 
         it("rejects invalid log data with 400", async () => {
-            const response = await request(app).post("/api/logs").send({
-                ...makeLog("invalid", "INFO"),
-                level: "DEBUG",
-            });
+            const response = await request(app)
+                .post("/api/logs")
+                .set("Authorization", `Bearer ${testAuthToken}`)
+                .send({
+                    ...makeLog("invalid", "INFO"),
+                    level: "DEBUG",
+                });
 
             expect(response.status).toBe(400);
             expect(response.body).toMatchObject({
@@ -99,6 +108,7 @@ describe("Logs HTTP API integration", () => {
 
             const response = await request(app)
                 .post("/api/logs/bulk")
+                .set("Authorization", `Bearer ${testAuthToken}`)
                 .send({ logs });
 
             expect(response.status).toBe(201);
@@ -115,6 +125,7 @@ describe("Logs HTTP API integration", () => {
         ])("rejects %s with 400", async (_description, body) => {
             const response = await request(app)
                 .post("/api/logs/bulk")
+                .set("Authorization", `Bearer ${testAuthToken}`)
                 .send(body);
 
             expect(response.status).toBe(400);
@@ -126,16 +137,20 @@ describe("Logs HTTP API integration", () => {
 
     describe("GET /api/logs", () => {
         it("returns 200 with data and pagination metadata", async () => {
-            await request(app).post("/api/logs/bulk").send({
-                logs: [
-                    makeLog("list-one", "INFO"),
-                    makeLog("list-two", "WARN", "2099-07-15T12:01:00.000Z"),
-                    makeLog("list-three", "ERROR", "2099-07-15T12:02:00.000Z"),
-                ],
-            });
+            await request(app)
+                .post("/api/logs/bulk")
+                .set("Authorization", `Bearer ${testAuthToken}`)
+                .send({
+                    logs: [
+                        makeLog("list-one", "INFO"),
+                        makeLog("list-two", "WARN", "2099-07-15T12:01:00.000Z"),
+                        makeLog("list-three", "ERROR", "2099-07-15T12:02:00.000Z"),
+                    ],
+                });
 
             const response = await request(app)
                 .get("/api/logs")
+                .set("Authorization", `Bearer ${testAuthToken}`)
                 .query({ search: testPrefix, page: 1, limit: 2 });
 
             expect(response.status).toBe(200);
@@ -150,12 +165,16 @@ describe("Logs HTTP API integration", () => {
         });
 
         it("filters logs by level", async () => {
-            await request(app).post("/api/logs/bulk").send({
-                logs: [makeLog("level-info", "INFO"), makeLog("level-warn", "WARN", "2099-07-15T12:01:00.000Z")],
-            });
+            await request(app)
+                .post("/api/logs/bulk")
+                .set("Authorization", `Bearer ${testAuthToken}`)
+                .send({
+                    logs: [makeLog("level-info", "INFO"), makeLog("level-warn", "WARN", "2099-07-15T12:01:00.000Z")],
+                });
 
             const response = await request(app)
                 .get("/api/logs")
+                .set("Authorization", `Bearer ${testAuthToken}`)
                 .query({ search: testPrefix, level: "warn" });
 
             expect(response.status).toBe(200);
@@ -164,12 +183,16 @@ describe("Logs HTTP API integration", () => {
         });
 
         it("filters logs by message search", async () => {
-            await request(app).post("/api/logs/bulk").send({
-                logs: [makeLog("search-match", "INFO"), makeLog("other", "INFO", "2099-07-15T12:01:00.000Z")],
-            });
+            await request(app)
+                .post("/api/logs/bulk")
+                .set("Authorization", `Bearer ${testAuthToken}`)
+                .send({
+                    logs: [makeLog("search-match", "INFO"), makeLog("other", "INFO", "2099-07-15T12:01:00.000Z")],
+                });
 
             const response = await request(app)
                 .get("/api/logs")
+                .set("Authorization", `Bearer ${testAuthToken}`)
                 .query({ search: "SEARCH-MATCH" });
 
             expect(response.status).toBe(200);
@@ -178,16 +201,20 @@ describe("Logs HTTP API integration", () => {
         });
 
         it("filters logs by from and to timestamps", async () => {
-            await request(app).post("/api/logs/bulk").send({
-                logs: [
-                    makeLog("date-before", "INFO", "2099-07-14T23:59:59.000Z"),
-                    makeLog("date-inside", "WARN", "2099-07-15T12:00:00.000Z"),
-                    makeLog("date-after", "ERROR", "2099-07-16T00:00:00.000Z"),
-                ],
-            });
+            await request(app)
+                .post("/api/logs/bulk")
+                .set("Authorization", `Bearer ${testAuthToken}`)
+                .send({
+                    logs: [
+                        makeLog("date-before", "INFO", "2099-07-14T23:59:59.000Z"),
+                        makeLog("date-inside", "WARN", "2099-07-15T12:00:00.000Z"),
+                        makeLog("date-after", "ERROR", "2099-07-16T00:00:00.000Z"),
+                    ],
+                });
 
             const response = await request(app)
                 .get("/api/logs")
+                .set("Authorization", `Bearer ${testAuthToken}`)
                 .query({
                     search: testPrefix,
                     from: "2099-07-15T00:00:00.000Z",
@@ -202,6 +229,7 @@ describe("Logs HTTP API integration", () => {
         it("rejects invalid page and limit values with 400", async () => {
             const response = await request(app)
                 .get("/api/logs")
+                .set("Authorization", `Bearer ${testAuthToken}`)
                 .query({ page: 0, limit: 101 });
 
             expect(response.status).toBe(400);
@@ -219,11 +247,12 @@ describe("Logs HTTP API integration", () => {
         it("returns an existing log with 200", async () => {
             const createResponse = await request(app)
                 .post("/api/logs")
+                .set("Authorization", `Bearer ${testAuthToken}`)
                 .send(makeLog("get-by-id", "ERROR"));
 
-            const response = await request(app).get(
-                `/api/logs/${createResponse.body.data.id}`,
-            );
+            const response = await request(app)
+                .get(`/api/logs/${createResponse.body.data.id}`)
+                .set("Authorization", `Bearer ${testAuthToken}`);
 
             expect(response.status).toBe(200);
             expect(response.body).toMatchObject({
@@ -237,9 +266,9 @@ describe("Logs HTTP API integration", () => {
         });
 
         it("returns 404 for a nonexistent ID", async () => {
-            const response = await request(app).get(
-                "/api/logs/00000000-0000-0000-0000-000000000000",
-            );
+            const response = await request(app)
+                .get("/api/logs/00000000-0000-0000-0000-000000000000")
+                .set("Authorization", `Bearer ${testAuthToken}`);
 
             expect(response.status).toBe(404);
             expect(response.body).toEqual({
@@ -254,19 +283,25 @@ describe("Logs HTTP API integration", () => {
 
     describe("GET /api/logs/stats", () => {
         it("returns 200 with totalLogs and byLevel", async () => {
-            await request(app).post("/api/logs/bulk").send({
-                logs: [
-                    makeLog("stats-info-1", "INFO"),
-                    makeLog("stats-info-2", "INFO", "2099-07-15T12:01:00.000Z"),
-                    makeLog("stats-warn", "WARN", "2099-07-15T12:02:00.000Z"),
-                    makeLog("stats-error", "ERROR", "2099-07-15T12:03:00.000Z"),
-                ],
-            });
+            await request(app)
+                .post("/api/logs/bulk")
+                .set("Authorization", `Bearer ${testAuthToken}`)
+                .send({
+                    logs: [
+                        makeLog("stats-info-1", "INFO"),
+                        makeLog("stats-info-2", "INFO", "2099-07-15T12:01:00.000Z"),
+                        makeLog("stats-warn", "WARN", "2099-07-15T12:02:00.000Z"),
+                        makeLog("stats-error", "ERROR", "2099-07-15T12:03:00.000Z"),
+                    ],
+                });
 
-            const response = await request(app).get("/api/logs/stats").query({
-                from: "2099-07-15T12:00:00.000Z",
-                to: "2099-07-15T12:03:00.000Z",
-            });
+            const response = await request(app)
+                .get("/api/logs/stats")
+                .set("Authorization", `Bearer ${testAuthToken}`)
+                .query({
+                    from: "2099-07-15T12:00:00.000Z",
+                    to: "2099-07-15T12:03:00.000Z",
+                });
 
             expect(response.status).toBe(200);
             expect(response.body).toEqual({
@@ -279,19 +314,25 @@ describe("Logs HTTP API integration", () => {
         });
 
         it("applies from and to date filtering", async () => {
-            await request(app).post("/api/logs/bulk").send({
-                logs: [
-                    makeLog("stats-before", "INFO", "2099-07-14T23:59:59.000Z"),
-                    makeLog("stats-inside-info", "INFO", "2099-07-15T12:00:00.000Z"),
-                    makeLog("stats-inside-error", "ERROR", "2099-07-15T12:01:00.000Z"),
-                    makeLog("stats-after", "WARN", "2099-07-16T00:00:00.000Z"),
-                ],
-            });
+            await request(app)
+                .post("/api/logs/bulk")
+                .set("Authorization", `Bearer ${testAuthToken}`)
+                .send({
+                    logs: [
+                        makeLog("stats-before", "INFO", "2099-07-14T23:59:59.000Z"),
+                        makeLog("stats-inside-info", "INFO", "2099-07-15T12:00:00.000Z"),
+                        makeLog("stats-inside-error", "ERROR", "2099-07-15T12:01:00.000Z"),
+                        makeLog("stats-after", "WARN", "2099-07-16T00:00:00.000Z"),
+                    ],
+                });
 
-            const response = await request(app).get("/api/logs/stats").query({
-                from: "2099-07-15T00:00:00.000Z",
-                to: "2099-07-15T23:59:59.999Z",
-            });
+            const response = await request(app)
+                .get("/api/logs/stats")
+                .set("Authorization", `Bearer ${testAuthToken}`)
+                .query({
+                    from: "2099-07-15T00:00:00.000Z",
+                    to: "2099-07-15T23:59:59.999Z",
+                });
 
             expect(response.status).toBe(200);
             expect(response.body.data).toEqual({
@@ -305,10 +346,13 @@ describe("Logs HTTP API integration", () => {
         it("deletes an existing log and subsequent GET returns 404", async () => {
             const createResponse = await request(app)
                 .post("/api/logs")
+                .set("Authorization", `Bearer ${testAuthToken}`)
                 .send(makeLog("delete", "WARN"));
             const id = createResponse.body.data.id as string;
 
-            const deleteResponse = await request(app).delete(`/api/logs/${id}`);
+            const deleteResponse = await request(app)
+                .delete(`/api/logs/${id}`)
+                .set("Authorization", `Bearer ${testAuthToken}`);
 
             expect(deleteResponse.status).toBe(200);
             expect(deleteResponse.body).toEqual({
@@ -316,7 +360,9 @@ describe("Logs HTTP API integration", () => {
                 data: { message: "Log deleted successfully" },
             });
 
-            const getResponse = await request(app).get(`/api/logs/${id}`);
+            const getResponse = await request(app)
+                .get(`/api/logs/${id}`)
+                .set("Authorization", `Bearer ${testAuthToken}`);
             expect(getResponse.status).toBe(404);
         });
     });

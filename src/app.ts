@@ -9,13 +9,14 @@ import requestLoggingMiddleware from "./middleware/request.logging.middleware.js
 import swaggerUi from "swagger-ui-express";
 import openApiDocument from "./docs/openapi.js";
 import apiRateLimiter from "./middleware/rate.limit.middleware.js";
+import authMiddleware from "./modules/auth/auth.middleware.js";
 
 const app = express();
 
 app.use(requestIdMiddleware);
 app.use(express.json());
 app.use(requestLoggingMiddleware);
-app.use("/api/logs", apiRateLimiter, logRoutes);
+app.use("/api/logs", apiRateLimiter, authMiddleware, logRoutes);
 app.use("/api/auth", authRoutes);
 app.get("/docs/openapi.json", (_req, res) => {
   res.status(200).json(openApiDocument);
