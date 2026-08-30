@@ -1,18 +1,20 @@
 import express from "express";
 import logRoutes from "./modules/logs/log.routes.js";
 import errorMiddleware, {
-    notFoundMiddleware,
+  notFoundMiddleware,
 } from "./middleware/error.middleware.js";
 import requestIdMiddleware from "./middleware/request.id.middleware.js";
 import requestLoggingMiddleware from "./middleware/request.logging.middleware.js";
 import swaggerUi from "swagger-ui-express";
 import openApiDocument from "./docs/openapi.js";
+import apiRateLimiter from "./middleware/rate.limit.middleware.js";
 
 const app = express();
 
 app.use(requestIdMiddleware);
 app.use(express.json());
 app.use(requestLoggingMiddleware);
+app.use("/api/logs", apiRateLimiter, logRoutes);
 
 app.get("/docs/openapi.json", (_req, res) => {
   res.status(200).json(openApiDocument);
@@ -28,7 +30,6 @@ app.get(["/docs", "/docs/"], (_req, res) => {
   res.type("html").send(docsHtml);
 });
 app.use("/docs", swaggerUi.serve);
-app.use("/api/logs", logRoutes);
 app.get("/health", (_req, res) => {
   res.status(200).json({
     status: "ok",

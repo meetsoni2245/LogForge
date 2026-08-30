@@ -15,6 +15,14 @@ const requestIdResponseHeader = {
     },
 };
 
+const rateLimitResponseHeader = {
+    description:
+        "Standard rate-limit information for the current client.",
+    schema: {
+        type: "string",
+    },
+};
+
 const logLevel = {
     type: "string",
     enum: ["INFO", "WARN", "ERROR"],
@@ -122,10 +130,18 @@ const jsonResponse = (
     },
 });
 
-const errorResponse = (description: string) => ({
+const errorResponse = (
+    description: string,
+    includeRateLimitHeader = false,
+) => ({
     description,
     headers: {
         "X-Request-Id": { $ref: "#/components/headers/X-Request-Id" },
+        ...(includeRateLimitHeader
+            ? {
+                RateLimit: { $ref: "#/components/headers/RateLimit" },
+            }
+            : {}),
     },
     content: {
         "application/json": {
@@ -183,6 +199,7 @@ const openApiDocument = {
                 responses: {
                     201: jsonResponse("The log was created.", successEnvelope({ $ref: "#/components/schemas/Log" })),
                     400: errorResponse("The log data is invalid. Validation details are included."),
+                    429: errorResponse("The client has exceeded the API rate limit.", true),
                     500: errorResponse("Unexpected server error."),
                 },
             },
@@ -209,6 +226,7 @@ const openApiDocument = {
                         },
                     }),
                     400: errorResponse("The query parameters are invalid."),
+                    429: errorResponse("The client has exceeded the API rate limit.", true),
                     500: errorResponse("Unexpected server error."),
                 },
             },
@@ -226,6 +244,7 @@ const openApiDocument = {
                         properties: { created: { type: "integer", minimum: 0 } },
                     })),
                     400: errorResponse("The bulk log data is invalid. Validation details are included."),
+                    429: errorResponse("The client has exceeded the API rate limit.", true),
                     500: errorResponse("Unexpected server error."),
                 },
             },
@@ -242,6 +261,7 @@ const openApiDocument = {
                 responses: {
                     200: jsonResponse("Log counts grouped by level.", successEnvelope({ $ref: "#/components/schemas/Stats" })),
                     400: errorResponse("The query parameters are invalid."),
+                    429: errorResponse("The client has exceeded the API rate limit.", true),
                     500: errorResponse("Unexpected server error."),
                 },
             },
@@ -255,6 +275,7 @@ const openApiDocument = {
                 responses: {
                     200: jsonResponse("The requested log.", successEnvelope({ $ref: "#/components/schemas/Log" })),
                     404: errorResponse("The log was not found."),
+                    429: errorResponse("The client has exceeded the API rate limit.", true),
                     500: errorResponse("Unexpected server error."),
                 },
             },
@@ -269,6 +290,7 @@ const openApiDocument = {
                         properties: { message: { type: "string", enum: ["Log deleted successfully"] } },
                     })),
                     404: errorResponse("The log was not found."),
+                    429: errorResponse("The client has exceeded the API rate limit.", true),
                     500: errorResponse("Unexpected server error."),
                 },
             },
@@ -277,6 +299,7 @@ const openApiDocument = {
     components: {
         headers: {
             "X-Request-Id": requestIdResponseHeader,
+            RateLimit: rateLimitResponseHeader,
         },
         schemas: {
             LogLevel: logLevel,
