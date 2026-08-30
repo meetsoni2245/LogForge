@@ -387,6 +387,23 @@ describe("Logs HTTP API integration", () => {
             });
             expect(response.body.data.id).toEqual(expect.any(String));
         });
+        it("rejects an invalid raw log line with 400", async () => {
+            const response = await request(app)
+                .post("/api/logs/raw")
+                .set("Authorization", `Bearer ${testAuthToken}`)
+                .send({
+                    line: "this is not a valid log line",
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body).toMatchObject({
+                success: false,
+                error: {
+                    message: expect.any(String),
+                    requestId: expect.any(String),
+                },
+            });
+        });
 
 
     });

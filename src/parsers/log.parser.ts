@@ -1,3 +1,4 @@
+import AppError from "../errors/app.error.js";
 export function parseLogLine(
     line: string,
 ): {
@@ -8,25 +9,25 @@ export function parseLogLine(
     const parts = line.trim().split(" ");
 
     if (parts.length < 3) {
-        throw new Error("Invalid log line format");
+        throw new AppError(400, "Invalid log line format");
     }
 
     const timestamp = new Date(parts[0]);
 
     if (isNaN(timestamp.getTime())) {
-        throw new Error("Invalid timestamp format");
+        throw new AppError(400, "Invalid timestamp format");
     }
 
     const level = parts[1] as "INFO" | "WARN" | "ERROR";
 
     if (!["INFO", "WARN", "ERROR"].includes(level)) {
-        throw new Error(`Unsupported log level: ${level}`);
+        throw new AppError(400, `Unsupported log level: ${level}`);
     }
 
     const message = parts.slice(2).join(" ");
 
     if (!message) {
-        throw new Error("Log message cannot be empty");
+        throw new AppError(400, "Log message cannot be empty");
     }
 
     return {
