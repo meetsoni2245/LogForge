@@ -44,6 +44,7 @@ describe("OpenAPI documentation", () => {
             "/api/logs/bulk": expect.any(Object),
             "/api/logs/{id}": expect.any(Object),
             "/api/logs/stats": expect.any(Object),
+            "/api/logs/raw": expect.any(Object),
         }));
         expect(document.components.schemas.LogLevel.enum).toEqual([
             "INFO",

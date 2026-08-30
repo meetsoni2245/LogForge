@@ -249,6 +249,41 @@ const openApiDocument = {
                 },
             },
         },
+        "/api/logs/raw": {
+            post: {
+                tags: ["Logs"],
+                summary: "Create a log from a raw log line",
+                parameters: [
+                    { name: "X-Request-Id", in: "header", ...requestIdHeader },
+                ],
+                requestBody: requestBody(
+                    {
+                        type: "object",
+                        required: ["line"],
+                        properties: {
+                            line: {
+                                type: "string",
+                                minLength: 1,
+                                description: "Raw log line to parse and create.",
+                            },
+                        },
+                    },
+                    "Raw log line to parse.",
+                ),
+                responses: {
+                    201: jsonResponse(
+                        "The log was created from the raw log line.",
+                        successEnvelope({ $ref: "#/components/schemas/Log" }),
+                    ),
+                    400: errorResponse("The raw log data is invalid."),
+                    429: errorResponse(
+                        "The client has exceeded the API rate limit.",
+                        true,
+                    ),
+                    500: errorResponse("Unexpected server error."),
+                },
+            },
+        },
         "/api/logs/stats": {
             get: {
                 tags: ["Logs"],
