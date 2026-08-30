@@ -1,5 +1,6 @@
 import express from "express";
 import logRoutes from "./modules/logs/log.routes.js";
+import authRoutes from "./modules/auth/auth.routes.js";
 import errorMiddleware, {
   notFoundMiddleware,
 } from "./middleware/error.middleware.js";
@@ -15,7 +16,7 @@ app.use(requestIdMiddleware);
 app.use(express.json());
 app.use(requestLoggingMiddleware);
 app.use("/api/logs", apiRateLimiter, logRoutes);
-
+app.use("/api/auth", authRoutes);
 app.get("/docs/openapi.json", (_req, res) => {
   res.status(200).json(openApiDocument);
 });

@@ -30,4 +30,6 @@ export const env = {
   NODE_ENV: optionalEnv("NODE_ENV", "development"),
   PORT: parseInt(optionalEnv("PORT", "3000"), 10),
   DATABASE_URL: requiredEnv("DATABASE_URL"),
+  JWT_SECRET: requiredEnv("JWT_SECRET"),
+  JWT_EXPIRES_IN: optionalEnv("JWT_EXPIRES_IN", "1h"),
 } as const;
