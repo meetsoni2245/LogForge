@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { parseLogLine } from "../../parsers/log.parser.js";
 import {
     bulkCreateLogsSchema,
     createLogSchema,
@@ -181,3 +182,29 @@ export async function getStatsController(
     });
 }
 
+export async function createRawLogController(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    if (
+        typeof req.body !== "object" ||
+        req.body === null ||
+        typeof req.body.line !== "string"
+    ) {
+        res.status(400).json({
+            success: false,
+            error: {
+                message: "Invalid raw log data",
+                requestId: req.requestId,
+            },
+        });
+        return;
+    }
+    const parsed = parseLogLine(req.body.line);
+    const log = await createLogService(parsed);
+
+    res.status(201).json({
+        success: true,
+        data: log,
+    });
+}

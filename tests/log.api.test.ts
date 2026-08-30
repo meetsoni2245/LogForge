@@ -366,4 +366,28 @@ describe("Logs HTTP API integration", () => {
             expect(getResponse.status).toBe(404);
         });
     });
+
+    describe("POST /api/logs/raw", () => {
+        it("creates a log from a raw log line", async () => {
+            const response = await request(app)
+                .post("/api/logs/raw")
+                .set("Authorization", `Bearer ${testAuthToken}`)
+                .send({
+                    line: `2099-07-15T12:00:00.000Z ERROR ${testPrefix}:raw-test`,
+                });
+
+            expect(response.status).toBe(201);
+            expect(response.body).toMatchObject({
+                success: true,
+                data: {
+                    level: "ERROR",
+                    message: `${testPrefix}:raw-test`,
+                    timestamp: "2099-07-15T12:00:00.000Z",
+                },
+            });
+            expect(response.body.data.id).toEqual(expect.any(String));
+        });
+
+
+    });
 });
