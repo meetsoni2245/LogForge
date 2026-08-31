@@ -226,6 +226,25 @@ describe("Logs HTTP API integration", () => {
             expect(response.body.data[0].message).toBe(`${testPrefix}:date-inside`);
         });
 
+        it("rejects a from date later than to", async () => {
+            const response = await request(app)
+                .get("/api/logs")
+                .query({
+                    from: "2099-07-16T00:00:00.000Z",
+                    to: "2099-07-15T00:00:00.000Z",
+                })
+                .set("Authorization", `Bearer ${testAuthToken}`);
+
+            expect(response.status).toBe(400);
+            expect(response.body).toMatchObject({
+                success: false,
+                error: {
+                    message: "Invalid query parameters",
+                    requestId: response.headers["x-request-id"],
+                },
+            });
+        });
+
         it("rejects invalid page and limit values with 400", async () => {
             const response = await request(app)
                 .get("/api/logs")
