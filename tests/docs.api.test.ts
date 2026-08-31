@@ -77,5 +77,25 @@ describe("OpenAPI documentation", () => {
         );
         expect(document.paths["/api/logs"].post.responses["201"].headers["X-Request-Id"])
             .toEqual({ $ref: "#/components/headers/X-Request-Id" });
+        const logQueryParameters = document.paths["/api/logs"].get.parameters;
+
+        expect(logQueryParameters).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    name: "from",
+                    in: "query",
+                    description: expect.stringContaining(
+                        "Must be earlier than or equal to `to`",
+                    ),
+                }),
+                expect.objectContaining({
+                    name: "to",
+                    in: "query",
+                    description: expect.stringContaining(
+                        "Must be later than or equal to `from`",
+                    ),
+                }),
+            ]),
+        );
     });
 });

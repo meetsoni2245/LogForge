@@ -212,8 +212,24 @@ const openApiDocument = {
                     { name: "limit", in: "query", schema: { type: "integer", minimum: 1, maximum: 100, default: 20 } },
                     { name: "level", in: "query", description: "Case-insensitive log level filter.", schema: logLevel },
                     { name: "search", in: "query", schema: { type: "string", description: "Case-insensitive message search." } },
-                    { name: "from", in: "query", schema: { type: "string", format: "date-time" } },
-                    { name: "to", in: "query", schema: { type: "string", format: "date-time" } },
+                    {
+                        name: "from",
+                        in: "query",
+                        description: "Inclusive lower timestamp bound. Must be earlier than or equal to `to` when both are provided.",
+                        schema: {
+                            type: "string",
+                            format: "date-time",
+                        },
+                    },
+                    {
+                        name: "to",
+                        in: "query",
+                        description: "Inclusive upper timestamp bound. Must be later than or equal to `from` when both are provided.",
+                        schema: {
+                            type: "string",
+                            format: "date-time",
+                        },
+                    },
                 ],
                 responses: {
                     200: jsonResponse("A paginated list of logs.", {
