@@ -204,4 +204,34 @@ describe("log repository integration", () => {
         );
         expect(result.logLevels).toHaveLength(2);
     });
+
+    it("orders logs deterministically when timestamps are identical", async () => {
+        const timestamp = "2026-01-15T12:00:00.000Z";
+
+        const created = await createLogs([
+            makeLog("same-time-1", "INFO", timestamp),
+            makeLog("same-time-2", "INFO", timestamp),
+            makeLog("same-time-3", "INFO", timestamp),
+        ]);
+
+        expect(created).toBe(3);
+
+        const firstResult = await findLogs({
+            search: testPrefix,
+            page: 1,
+            limit: 3,
+        });
+
+        const secondResult = await findLogs({
+            search: testPrefix,
+            page: 1,
+            limit: 3,
+        });
+
+        const firstIds = firstResult.logs.map(({ id }) => id);
+        const secondIds = secondResult.logs.map(({ id }) => id);
+
+        expect(firstIds).toEqual(secondIds);
+        expect(firstIds).toEqual([...firstIds].sort().reverse());
+    });
 });

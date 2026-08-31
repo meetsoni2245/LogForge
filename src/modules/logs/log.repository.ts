@@ -54,9 +54,14 @@ export async function findLogs(filters: LogFilters) {
     const [logs, total] = await Promise.all([
         prisma.log.findMany({
             where,
-            orderBy: {
-                timestamp: "desc",
-            },
+            orderBy: [
+                {
+                    timestamp: "desc",
+                },
+                {
+                    id: "desc",
+                },
+            ],
             skip: ((filters.page ?? 1) - 1) * (filters.limit ?? 20),
             take: filters.limit ?? 20,
         }),
