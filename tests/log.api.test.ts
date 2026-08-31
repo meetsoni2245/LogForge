@@ -298,6 +298,22 @@ describe("Logs HTTP API integration", () => {
                 },
             });
         });
+
+        it("rejects a malformed ID with 400", async () => {
+            const response = await request(app)
+                .get("/api/logs/not-a-valid-uuid")
+                .set("Authorization", `Bearer ${testAuthToken}`);
+
+            expect(response.status).toBe(400);
+            expect(response.body).toMatchObject({
+                success: false,
+                error: {
+                    message: "Invalid log ID",
+                    code: "INVALID_LOG_ID",
+                    requestId: response.headers["x-request-id"],
+                },
+            });
+        });
     });
 
     describe("GET /api/logs/stats", () => {

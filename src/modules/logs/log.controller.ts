@@ -15,6 +15,12 @@ import {
     getStatsService,
 } from "./log.service.js";
 
+function isValidUuid(value: string): boolean {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        value,
+    );
+}
+
 
 export async function createLogController(
     req: Request,
@@ -110,7 +116,21 @@ export async function getLogByIdController(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const log = await getLogByIdService(String(req.params.id));
+    const id = String(req.params.id);
+
+    if (!isValidUuid(id)) {
+        res.status(400).json({
+            success: false,
+            error: {
+                message: "Invalid log ID",
+                code: "INVALID_LOG_ID",
+                requestId: req.requestId,
+            },
+        });
+        return;
+    }
+
+    const log = await getLogByIdService(id);
 
     if (!log) {
         res.status(404).json({
@@ -133,7 +153,21 @@ export async function deleteLogController(
     req: Request,
     res: Response,
 ): Promise<void> {
-    const log = await getLogByIdService(String(req.params.id));
+    const id = String(req.params.id);
+
+    if (!isValidUuid(id)) {
+        res.status(400).json({
+            success: false,
+            error: {
+                message: "Invalid log ID",
+                code: "INVALID_LOG_ID",
+                requestId: req.requestId,
+            },
+        });
+        return;
+    }
+
+    const log = await getLogByIdService(id);
 
     if (!log) {
         res.status(404).json({
@@ -146,7 +180,7 @@ export async function deleteLogController(
         return;
     }
 
-    await deleteLogService(String(req.params.id));
+    await deleteLogService(id);
 
     res.status(200).json({
         success: true,
