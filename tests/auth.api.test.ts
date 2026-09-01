@@ -10,6 +10,7 @@ import {
 } from "vitest";
 import request from "supertest";
 import app from "../src/app.js";
+import { loginRateLimiter } from "../src/modules/auth/login.rate.limit.middleware.js";
 import prisma from "../src/config/database.js";
 
 const testPrefix = "__logforge_auth_api_test__";
@@ -30,6 +31,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
     await removeTestUsers();
+    await loginRateLimiter.resetKey("127.0.0.1");
 });
 
 afterEach(async () => {
@@ -214,33 +216,33 @@ describe("Auth HTTP API integration", () => {
                     password: "password123",
                 });
 
-            const responses = await Promise.all(
-                Array.from({ length: 11 }, () =>
-                    request(app)
+            const responses = [];
+
+            for (let attempt = 0; attempt < 11; attempt++) {
+                responses.push(
+                    await request(app)
                         .post("/api/auth/login")
                         .send({
                             username,
                             password: "wrong-password",
                         }),
-                ),
-            );
-
-            const rateLimitedResponses = responses.filter(
-                (response) => response.status === 429,
-            );
-
-            expect(rateLimitedResponses.length).toBeGreaterThan(0);
-
-            for (const response of rateLimitedResponses) {
-                expect(response.body).toMatchObject({
-                    success: false,
-                    error: {
-                        message: "Too many requests, please try again later.",
-                        code: "RATE_LIMIT_EXCEEDED",
-                        requestId: expect.any(String),
-                    },
-                });
+                );
             }
+
+            expect(responses.slice(0, 10).every(
+                (response) => response.status === 401,
+            )).toBe(true);
+
+            expect(responses[10].status).toBe(429);
+
+            expect(responses[10].body).toMatchObject({
+                success: false,
+                error: {
+                    message: "Too many requests, please try again later.",
+                    code: "RATE_LIMIT_EXCEEDED",
+                    requestId: expect.any(String),
+                },
+            });
         });
     });
 });
