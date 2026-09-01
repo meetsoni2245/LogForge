@@ -18,6 +18,10 @@ function createErrorTestApp() {
     testApp.get("/unexpected-error", () => {
         throw new Error("database password=secret should not be exposed");
     });
+    testApp.get("/headers-sent", (_req, res, next) => {
+        res.status(200).send("response already sent");
+        next(new Error("late error"));
+    });
     testApp.use(errorMiddleware);
 
     return testApp;
@@ -52,6 +56,13 @@ describe("centralized HTTP error handling", () => {
         });
         expect(JSON.stringify(response.body)).not.toContain("database");
         expect(JSON.stringify(response.body)).not.toContain("secret");
+    });
+
+    it("delegates errors when response headers have already been sent", async () => {
+        const response = await request(createErrorTestApp()).get("/headers-sent");
+
+        expect(response.status).toBe(200);
+        expect(response.text).toBe("response already sent");
     });
 
     it("returns the standard 404 response for an unmatched route", async () => {
