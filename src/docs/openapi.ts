@@ -71,6 +71,75 @@ const createLogSchema = {
     },
 };
 
+const userSchema = {
+    type: "object",
+    required: ["id", "username", "createdAt"],
+    properties: {
+        id: {
+            type: "string",
+            format: "uuid",
+        },
+        username: {
+            type: "string",
+            minLength: 3,
+            maxLength: 50,
+        },
+        createdAt: {
+            type: "string",
+            format: "date-time",
+        },
+    },
+};
+
+const registerSchema = {
+    type: "object",
+    required: ["username", "password"],
+    properties: {
+        username: {
+            type: "string",
+            minLength: 3,
+            maxLength: 50,
+        },
+        password: {
+            type: "string",
+            minLength: 8,
+            maxLength: 128,
+        },
+    },
+};
+
+const loginSchema = {
+    type: "object",
+    required: ["username", "password"],
+    properties: {
+        username: {
+            type: "string",
+            minLength: 1,
+            maxLength: 50,
+        },
+        password: {
+            type: "string",
+            minLength: 1,
+            maxLength: 128,
+        },
+    },
+};
+
+const loginResponseSchema = {
+    type: "object",
+    required: ["token", "user"],
+    properties: {
+        token: {
+            type: "string",
+        },
+        user: {
+            $ref: "#/components/schemas/User",
+        },
+    },
+};
+
+
+
 const paginationSchema = {
     type: "object",
     required: ["page", "limit", "total", "totalPages"],
@@ -167,7 +236,11 @@ const openApiDocument = {
         description: "HTTP API for ingesting, querying, and analyzing application logs.",
     },
     servers: [{ url: "/", description: "Current LogForge server" }],
-    tags: [{ name: "Health" }, { name: "Logs" }],
+    tags: [
+        { name: "Health" },
+        { name: "Logs" },
+        { name: "Auth" },
+    ],
     paths: {
         "/health": {
             get: {
@@ -185,6 +258,69 @@ const openApiDocument = {
                                 service: { type: "string", enum: ["LogForge"] },
                             },
                         },
+                    ),
+                    500: errorResponse("Unexpected server error."),
+                },
+            },
+        },
+        "/api/auth/register": {
+            post: {
+                tags: ["Auth"],
+                summary: "Register a user",
+                parameters: [
+                    {
+                        name: "X-Request-Id",
+                        in: "header",
+                        ...requestIdHeader,
+                    },
+                ],
+                requestBody: requestBody(
+                    { $ref: "#/components/schemas/Register" },
+                    "User registration credentials.",
+                ),
+                responses: {
+                    201: jsonResponse(
+                        "The user was registered.",
+                        successEnvelope({
+                            $ref: "#/components/schemas/User",
+                        }),
+                    ),
+                    400: errorResponse("The registration data is invalid."),
+                    409: errorResponse("The username already exists."),
+                    429: errorResponse(
+                        "The client has exceeded the authentication rate limit.",
+                        true,
+                    ),
+                    500: errorResponse("Unexpected server error."),
+                },
+            },
+        },
+
+        "/api/auth/login": {
+            post: {
+                tags: ["Auth"],
+                summary: "Authenticate a user",
+                parameters: [
+                    {
+                        name: "X-Request-Id",
+                        in: "header",
+                        ...requestIdHeader,
+                    },
+                ],
+                requestBody: requestBody(
+                    { $ref: "#/components/schemas/Login" },
+                    "User login credentials.",
+                ),
+                responses: {
+                    200: jsonResponse(
+                        "The user was authenticated.",
+                        successEnvelope(loginResponseSchema),
+                    ),
+                    400: errorResponse("The login data is invalid."),
+                    401: errorResponse("The username or password is invalid."),
+                    429: errorResponse(
+                        "The client has exceeded the authentication rate limit.",
+                        true,
                     ),
                     500: errorResponse("Unexpected server error."),
                 },
@@ -367,6 +503,10 @@ const openApiDocument = {
             RateLimit: rateLimitResponseHeader,
         },
         schemas: {
+            User: userSchema,
+            Register: registerSchema,
+            Login: loginSchema,
+            LoginResponse: loginResponseSchema,
             LogLevel: logLevel,
             Log: logSchema,
             CreateLog: createLogSchema,
