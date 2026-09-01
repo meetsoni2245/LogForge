@@ -84,4 +84,21 @@ describe("auth middleware", () => {
             },
         });
     });
+
+    it("rejects a non-Bearer authorization scheme", async () => {
+        const app = createTestApp();
+
+        const response = await request(app)
+            .get("/protected")
+            .set("Authorization", "Basic some-token");
+
+        expect(response.status).toBe(401);
+        expect(response.body).toMatchObject({
+            success: false,
+            error: {
+                message: "Authentication required",
+                code: "AUTHENTICATION_REQUIRED",
+            },
+        });
+    });
 });
