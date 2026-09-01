@@ -40,4 +40,35 @@ describe("auth token", () => {
             "Invalid authentication token",
         );
     });
+
+    it("rejects an expired token", () => {
+        const token = jwt.sign(payload, process.env.JWT_SECRET!, {
+            expiresIn: -1,
+        });
+
+        expect(() => verifyAuthToken(token)).toThrow();
+    });
+
+    it("rejects a token missing userId", () => {
+        const token = jwt.sign(
+            { username: "testuser" },
+            process.env.JWT_SECRET!,
+        );
+
+        expect(() => verifyAuthToken(token)).toThrow(
+            "Invalid authentication token",
+        );
+    });
+
+    it("rejects a token missing username", () => {
+        const token = jwt.sign(
+            { userId: "user-123" },
+            process.env.JWT_SECRET!,
+        );
+
+        expect(() => verifyAuthToken(token)).toThrow(
+            "Invalid authentication token",
+        );
+    });
+
 });
