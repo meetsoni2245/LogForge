@@ -30,6 +30,14 @@ describe("auth token", () => {
         expect(() => verifyAuthToken(token)).toThrow();
     });
 
+    it("rejects a token signed with an unsupported algorithm", () => {
+        const token = jwt.sign(payload, process.env.JWT_SECRET!, {
+            algorithm: "HS384",
+        });
+
+        expect(() => verifyAuthToken(token)).toThrow();
+    });
+
     it("rejects a token with an invalid payload", () => {
         const token = jwt.sign(
             { userId: 123, username: "testuser" },

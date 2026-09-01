@@ -13,7 +13,9 @@ export function createAuthToken(payload: AuthTokenPayload): string {
 }
 
 export function verifyAuthToken(token: string): AuthTokenPayload {
-    const payload = jwt.verify(token, env.JWT_SECRET);
+    const payload = jwt.verify(token, env.JWT_SECRET, {
+        algorithms: ["HS256"],
+    });
 
     if (
         typeof payload !== "object" ||
