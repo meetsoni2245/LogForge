@@ -203,5 +203,44 @@ describe("Auth HTTP API integration", () => {
                 },
             });
         });
+
+        it("rate limits excessive login attempts with 429", async () => {
+            const username = `${testPrefix}_rate_limit`;
+
+            await request(app)
+                .post("/api/auth/register")
+                .send({
+                    username,
+                    password: "password123",
+                });
+
+            const responses = await Promise.all(
+                Array.from({ length: 11 }, () =>
+                    request(app)
+                        .post("/api/auth/login")
+                        .send({
+                            username,
+                            password: "wrong-password",
+                        }),
+                ),
+            );
+
+            const rateLimitedResponses = responses.filter(
+                (response) => response.status === 429,
+            );
+
+            expect(rateLimitedResponses.length).toBeGreaterThan(0);
+
+            for (const response of rateLimitedResponses) {
+                expect(response.body).toMatchObject({
+                    success: false,
+                    error: {
+                        message: "Too many requests, please try again later.",
+                        code: "RATE_LIMIT_EXCEEDED",
+                        requestId: expect.any(String),
+                    },
+                });
+            }
+        });
     });
 });
