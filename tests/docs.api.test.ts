@@ -67,6 +67,16 @@ describe("OpenAPI documentation", () => {
         expect(document.components.schemas.Pagination).toEqual(expect.any(Object));
         expect(document.components.schemas.Stats).toEqual(expect.any(Object));
         expect(document.components.headers["X-Request-Id"]).toEqual(expect.any(Object));
+        expect(document.components.securitySchemes.BearerAuth).toEqual({
+            type: "http",
+            scheme: "bearer",
+            bearerFormat: "JWT",
+        });
+        expect(document.components.securitySchemes.BearerAuth).toEqual({
+            type: "http",
+            scheme: "bearer",
+            bearerFormat: "JWT",
+        });
         expect(document.paths["/api/logs"].post.parameters).toEqual(
             expect.arrayContaining([
                 expect.objectContaining({
@@ -97,5 +107,32 @@ describe("OpenAPI documentation", () => {
                 }),
             ]),
         );
+        expect(document.paths["/api/logs"].post.security).toEqual([
+            { BearerAuth: [] },
+        ]);
+
+        expect(document.paths["/api/logs"].get.security).toEqual([
+            { BearerAuth: [] },
+        ]);
+
+        expect(document.paths["/api/logs/bulk"].post.security).toEqual([
+            { BearerAuth: [] },
+        ]);
+
+        expect(document.paths["/api/logs/{id}"].get.security).toEqual([
+            { BearerAuth: [] },
+        ]);
+
+        expect(document.paths["/api/logs/{id}"].delete.security).toEqual([
+            { BearerAuth: [] },
+        ]);
+
+        expect(document.paths["/api/logs/stats"].get.security).toEqual([
+            { BearerAuth: [] },
+        ]);
+
+        expect(document.paths["/api/logs/raw"].post.security).toEqual([
+            { BearerAuth: [] },
+        ]);
     });
 });

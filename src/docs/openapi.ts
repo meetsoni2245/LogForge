@@ -193,6 +193,7 @@ const openApiDocument = {
         "/api/logs": {
             post: {
                 tags: ["Logs"],
+                security: [{ BearerAuth: [] }],
                 summary: "Create a log",
                 parameters: [{ name: "X-Request-Id", in: "header", ...requestIdHeader }],
                 requestBody: requestBody({ $ref: "#/components/schemas/CreateLog" }, "Log to create."),
@@ -206,6 +207,7 @@ const openApiDocument = {
             get: {
                 tags: ["Logs"],
                 summary: "List logs",
+                security: [{ BearerAuth: [] }],
                 parameters: [
                     { name: "X-Request-Id", in: "header", ...requestIdHeader },
                     { name: "page", in: "query", schema: { type: "integer", minimum: 1, default: 1 } },
@@ -250,6 +252,7 @@ const openApiDocument = {
         "/api/logs/bulk": {
             post: {
                 tags: ["Logs"],
+                security: [{ BearerAuth: [] }],
                 summary: "Create multiple logs",
                 parameters: [{ name: "X-Request-Id", in: "header", ...requestIdHeader }],
                 requestBody: requestBody({ $ref: "#/components/schemas/BulkCreateLogs" }, "One to 100 logs to create."),
@@ -269,6 +272,7 @@ const openApiDocument = {
             post: {
                 tags: ["Logs"],
                 summary: "Create a log from a raw log line",
+                security: [{ BearerAuth: [] }],
                 parameters: [
                     { name: "X-Request-Id", in: "header", ...requestIdHeader },
                 ],
@@ -304,6 +308,7 @@ const openApiDocument = {
             get: {
                 tags: ["Logs"],
                 summary: "Get log statistics",
+                security: [{ BearerAuth: [] }],
                 parameters: [
                     { name: "X-Request-Id", in: "header", ...requestIdHeader },
                     { name: "from", in: "query", schema: { type: "string", format: "date-time" } },
@@ -322,6 +327,7 @@ const openApiDocument = {
             get: {
                 tags: ["Logs"],
                 summary: "Get a log by ID",
+                security: [{ BearerAuth: [] }],
                 parameters: [{ name: "X-Request-Id", in: "header", ...requestIdHeader }],
                 responses: {
                     200: jsonResponse("The requested log.", successEnvelope({ $ref: "#/components/schemas/Log" })),
@@ -333,6 +339,7 @@ const openApiDocument = {
             delete: {
                 tags: ["Logs"],
                 summary: "Delete a log by ID",
+                security: [{ BearerAuth: [] }],
                 parameters: [{ name: "X-Request-Id", in: "header", ...requestIdHeader }],
                 responses: {
                     200: jsonResponse("The log was deleted.", successEnvelope({
@@ -348,6 +355,13 @@ const openApiDocument = {
         },
     },
     components: {
+        securitySchemes: {
+            BearerAuth: {
+                type: "http",
+                scheme: "bearer",
+                bearerFormat: "JWT",
+            },
+        },
         headers: {
             "X-Request-Id": requestIdResponseHeader,
             RateLimit: rateLimitResponseHeader,
