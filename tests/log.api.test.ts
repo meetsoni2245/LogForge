@@ -133,6 +133,31 @@ describe("Logs HTTP API integration", () => {
             expect(response.body.error.message).toBe("Invalid bulk log data");
             expect(response.body.error.requestId).toBe(response.headers["x-request-id"]);
         });
+
+        it("handles concurrent bulk ingestion requests", async () => {
+            const requests = Array.from({ length: 5 }, (_, requestIndex) =>
+                request(app)
+                    .post("/api/logs/bulk")
+                    .set("Authorization", `Bearer ${testAuthToken}`)
+                    .send({
+                        logs: Array.from({ length: 10 }, (_, logIndex) =>
+                            makeLog(`concurrent-${requestIndex}-${logIndex}`, "INFO"),
+                        ),
+                    }),
+            );
+
+            const responses = await Promise.all(requests);
+
+            expect(responses).toHaveLength(5);
+
+            for (const response of responses) {
+                expect(response.status).toBe(201);
+                expect(response.body).toEqual({
+                    success: true,
+                    data: { created: 10 },
+                });
+            }
+        });
     });
 
     describe("GET /api/logs", () => {
