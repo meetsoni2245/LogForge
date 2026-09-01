@@ -1,3 +1,6 @@
+Here is the updated `README.md` with the specific API examples modified as requested, while keeping the rest of the documentation prose and structures intact.
+
+```markdown
 # LogForge
 
 LogForge is a TypeScript-based REST API designed for ingesting, parsing, storing, and querying application and server logs. The application provides structured log storage with PostgreSQL persistence managed via Prisma ORM, input validation using Zod, and user authentication using JSON Web Tokens. 
@@ -205,7 +208,7 @@ npm start
   {
     "success": true,
     "data": {
-      "status": "healthy"
+      "status": "ok"
     }
   }
   ```
@@ -219,7 +222,7 @@ npm start
 - **Request Body**:
   ```json
   {
-    "email": "user@example.com",
+    "username": "testuser",
     "password": "SecurePassword123"
   }
   ```
@@ -229,7 +232,7 @@ npm start
     "success": true,
     "data": {
       "id": "cb1c1a93-ea1d-4f10-bf9b-8eefbead9399",
-      "email": "user@example.com",
+      "username": "testuser",
       "createdAt": "2026-08-31T12:00:00.000Z"
     }
   }
@@ -240,7 +243,7 @@ npm start
 - **Request Body**:
   ```json
   {
-    "email": "user@example.com",
+    "username": "testuser",
     "password": "SecurePassword123"
   }
   ```
@@ -308,7 +311,7 @@ The properties supported on Log schemas in the database are strictly: `id`, `tim
   {
     "success": true,
     "data": {
-      "count": 2
+      "created": 2
     }
   }
   ```
@@ -364,7 +367,7 @@ The properties supported on Log schemas in the database are strictly: `id`, `tim
     "pagination": {
       "page": 1,
       "limit": 50,
-      "totalRecords": 1,
+      "total": 1,
       "totalPages": 1
     }
   }
@@ -584,3 +587,4 @@ npm run lint
 ## License
 
 LogForge is open-source software. There is currently no license file in the repository. The project remains subject to default copyright permissions and terms defined by the repository owner.
+```
