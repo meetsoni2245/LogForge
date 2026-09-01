@@ -69,4 +69,13 @@ describe("log parser", () => {
             ),
         ).toThrow();
     });
+
+    it("handles multiple spaces between log fields", () => {
+        const result = parseLogLine(
+            "2026-09-01T12:00:00Z   ERROR   Database connection failed",
+        );
+
+        expect(result.level).toBe("ERROR");
+        expect(result.message).toBe("Database connection failed");
+    });
 });

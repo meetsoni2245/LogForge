@@ -6,7 +6,7 @@ export function parseLogLine(
     level: "INFO" | "WARN" | "ERROR";
     message: string;
 } {
-    const parts = line.trim().split(" ");
+    const parts = line.trim().split(/\s+/);
 
     if (parts.length < 3) {
         throw new AppError(400, "Invalid log line format");
