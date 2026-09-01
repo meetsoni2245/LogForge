@@ -113,6 +113,17 @@ describe("getLogsQuerySchema", () => {
         }
     });
 
+    it.each([
+        ["page", "abc"],
+        ["page", "1.5"],
+        ["limit", "Infinity"],
+        ["limit", "NaN"],
+    ])("rejects malformed numeric %s=%s", (field, value) => {
+        const result = getLogsQuerySchema.safeParse({ [field]: value });
+
+        expect(result.success).toBe(false);
+    });
+
     it("accepts a valid level", () => {
         const result = getLogsQuerySchema.safeParse({ level: "ERROR" });
 
