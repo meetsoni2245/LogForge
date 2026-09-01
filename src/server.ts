@@ -18,7 +18,7 @@ import "dotenv/config";
 
 import app from "./app.js";
 import { env } from "./config/env.js";
-
+import prisma from "./config/database.js";
 const server = app.listen(env.PORT, () => {
   console.log(`[LogForge] Server running in ${env.NODE_ENV} mode`);
   console.log(`[LogForge] Listening on http://localhost:${env.PORT}`);
@@ -26,10 +26,15 @@ const server = app.listen(env.PORT, () => {
 });
 
 // Graceful shutdown: close the server cleanly on SIGTERM (e.g. from a process manager).
-process.on("SIGTERM", () => {
+process.on("SIGTERM", async () => {
   console.log("[LogForge] SIGTERM received — shutting down gracefully");
-  server.close(() => {
+
+  server.close(async () => {
     console.log("[LogForge] Server closed");
+
+    await prisma.$disconnect();
+
+    console.log("[LogForge] Database disconnected");
     process.exit(0);
   });
 });
