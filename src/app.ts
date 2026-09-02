@@ -10,9 +10,15 @@ import swaggerUi from "swagger-ui-express";
 import openApiDocument from "./docs/openapi.js";
 import apiRateLimiter from "./middleware/rate.limit.middleware.js";
 import authMiddleware from "./modules/auth/auth.middleware.js";
+import cors from "cors";
 
 const app = express();
 
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+  }),
+);
 app.use(requestIdMiddleware);
 app.use(express.json());
 app.use(requestLoggingMiddleware);

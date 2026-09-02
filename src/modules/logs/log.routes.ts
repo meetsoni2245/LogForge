@@ -7,6 +7,7 @@ import {
     getLogByIdController,
     getLogsController,
     getStatsController,
+    getHourlyStatsController,
 } from "./log.controller.js";
 
 const router = Router();
@@ -16,6 +17,7 @@ router.post("/bulk", createLogsController);
 router.get("/", getLogsController);
 router.post("/raw", createRawLogController);
 router.get("/stats", getStatsController);
+router.get("/stats/hourly", getHourlyStatsController);
 router.get("/:id", getLogByIdController);
 router.delete("/:id", deleteLogController);
 

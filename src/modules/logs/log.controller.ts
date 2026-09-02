@@ -13,6 +13,7 @@ import {
     getLogByIdService,
     getLogsService,
     getStatsService,
+    getHourlyStatsService,
 } from "./log.service.js";
 
 function isValidUuid(value: string): boolean {
@@ -209,6 +210,32 @@ export async function getStatsController(
     }
 
     const stats = await getStatsService(parsedQuery.data);
+
+    res.status(200).json({
+        success: true,
+        data: stats,
+    });
+}
+
+export async function getHourlyStatsController(
+    req: Request,
+    res: Response,
+): Promise<void> {
+    const parsedQuery = getStatsQuerySchema.safeParse(req.query);
+
+    if (!parsedQuery.success) {
+        res.status(400).json({
+            success: false,
+            error: {
+                message: "Invalid query parameters",
+                details: parsedQuery.error.flatten(),
+                requestId: req.requestId,
+            },
+        });
+        return;
+    }
+
+    const stats = await getHourlyStatsService(parsedQuery.data);
 
     res.status(200).json({
         success: true,

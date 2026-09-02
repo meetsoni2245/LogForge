@@ -114,3 +114,62 @@ export async function getLogStats(
         logLevels,
     };
 }
+
+export async function getHourlyLogStats(
+    filters: Pick<LogFilters, "from" | "to"> = {},
+) {
+    const where = filters.from || filters.to
+        ? {
+            timestamp: {
+                ...(filters.from && { gte: filters.from }),
+                ...(filters.to && { lte: filters.to }),
+            },
+        }
+        : undefined;
+
+    const logs = await prisma.log.findMany({
+        where,
+        select: {
+            timestamp: true,
+            level: true,
+        },
+        orderBy: {
+            timestamp: "asc",
+        },
+    });
+
+    const hourly = new Map<
+        string,
+        { info: number; warn: number; error: number }
+    >();
+
+    for (const log of logs) {
+        const hour = new Date(log.timestamp);
+        hour.setUTCMinutes(0, 0, 0);
+
+        const key = hour.toISOString();
+
+        if (!hourly.has(key)) {
+            hourly.set(key, {
+                info: 0,
+                warn: 0,
+                error: 0,
+            });
+        }
+
+        const bucket = hourly.get(key)!;
+
+        if (log.level === "INFO") {
+            bucket.info += 1;
+        } else if (log.level === "WARN") {
+            bucket.warn += 1;
+        } else if (log.level === "ERROR") {
+            bucket.error += 1;
+        }
+    }
+
+    return Array.from(hourly.entries()).map(([hour, counts]) => ({
+        hour,
+        ...counts,
+    }));
+}

@@ -1,6 +1,3 @@
-Here is the updated `README.md` with the specific API examples modified as requested, while keeping the rest of the documentation prose and structures intact.
-
-```markdown
 # LogForge
 
 LogForge is a TypeScript-based REST API designed for ingesting, parsing, storing, and querying application and server logs. The application provides structured log storage with PostgreSQL persistence managed via Prisma ORM, input validation using Zod, and user authentication using JSON Web Tokens. 

@@ -5,6 +5,7 @@ import {
     findLogById,
     findLogs,
     getLogStats,
+    getHourlyLogStats,
     type CreateLogData,
     type LogFilters,
 } from "./log.repository.js";
@@ -60,4 +61,10 @@ export async function getStatsService(
         totalLogs: stats.totalLogs,
         byLevel,
     };
+}
+
+export async function getHourlyStatsService(
+    filters: Pick<LogFilters, "from" | "to"> = {},
+) {
+    return getHourlyLogStats(filters);
 }
