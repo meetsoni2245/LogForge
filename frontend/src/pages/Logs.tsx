@@ -11,6 +11,7 @@ export default function Logs() {
     const [error, setError] = useState('')
     const [page, setPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
+    const [pageSize, setPageSize] = useState(20)
     const [level, setLevel] = useState<'INFO' | 'WARN' | 'ERROR' | undefined>(
         undefined,
     )
@@ -25,7 +26,7 @@ export default function Logs() {
 
                 const result = await getLogs({
                     page,
-                    limit: 20,
+                    limit: pageSize,
                     level,
                     search: search || undefined,
                     from: from ? new Date(from).toISOString() : undefined,
@@ -47,7 +48,7 @@ export default function Logs() {
         }
 
         loadLogs()
-    }, [page, level, search, from, to])
+    }, [page, level, search, from, to, pageSize])
 
     if (isLoading) {
         return (
@@ -134,6 +135,19 @@ export default function Logs() {
                         }}
                         className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none focus:border-slate-500"
                     />
+                    <select
+                        value={pageSize}
+                        onChange={(event) => {
+                            setPageSize(Number(event.target.value))
+                            setPage(1)
+                        }}
+                        className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none focus:border-slate-500"
+                    >
+                        <option value={10}>10 per page</option>
+                        <option value={20}>20 per page</option>
+                        <option value={50}>50 per page</option>
+                        <option value={100}>100 per page</option>
+                    </select>
                 </div>
 
                 <div className="mt-6 overflow-hidden rounded-lg border border-slate-800 bg-slate-900">
@@ -149,6 +163,9 @@ export default function Logs() {
                                     </th>
                                     <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-slate-500">
                                         Message
+                                    </th>
+                                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+                                        Actions
                                     </th>
                                 </tr>
                             </thead>
@@ -187,12 +204,16 @@ export default function Logs() {
                                                 </span>
                                             </td>
 
-                                            <td className="px-4 py-3 text-sm">
+                                            <td className="px-4 py-3 text-sm text-slate-200">
+                                                {log.message}
+                                            </td>
+
+                                            <td className="px-4 py-3">
                                                 <Link
                                                     to={`/logs/${log.id}`}
-                                                    className="text-slate-200 hover:text-white hover:underline"
+                                                    className="text-sm text-slate-400 hover:text-slate-200 hover:underline"
                                                 >
-                                                    {log.message}
+                                                    View
                                                 </Link>
                                             </td>
                                         </tr>
