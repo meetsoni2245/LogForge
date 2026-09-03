@@ -7,6 +7,7 @@ import {
 import { getHourlyStats, getLogs, getStats, UnauthorizedError } from '../services/api'
 import ErrorState from '../components/ErrorState'
 import { useAuth } from '../hooks/useAuth'
+import { Link } from 'react-router-dom'
 
 const numberFormat = new Intl.NumberFormat('en-US')
 
@@ -149,6 +150,12 @@ export default function Dashboard() {
                         LogForge
                     </span>
                     <div className="ml-auto flex items-center gap-4">
+                        <Link
+                            to="/logs"
+                            className="rounded-md px-3 py-1.5 text-sm text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-100"
+                        >
+                            Logs
+                        </Link>
                         <span className="hidden text-sm text-slate-400 sm:inline">
                             {user?.username}
                         </span>

@@ -4,6 +4,8 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import ProtectedRoute from './components/ProtectedRoute'
+import Logs from './pages/Logs'
+import LogDetail from './pages/LogDetail'
 
 function App() {
   return (
@@ -15,6 +17,8 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/logs" element={<Logs />} />
+            <Route path="/logs/:id" element={<LogDetail />} />
           </Route>
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Route>
