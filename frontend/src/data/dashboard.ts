@@ -1,5 +1,6 @@
-export type LogLevel = 'INFO' | 'WARN' | 'ERROR'
+import type { LogLevel } from '../types/api'
 
+export type { LogLevel }
 export interface LogEntry {
     id: string
     timestamp: string

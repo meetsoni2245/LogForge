@@ -2,9 +2,12 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { loginUser } from '../services/api'
+import Brand from '../components/Brand'
+import { useAuth } from '../hooks/useAuth'
 
 export default function Login() {
     const navigate = useNavigate()
+    const { login } = useAuth()
     const [error, setError] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -26,9 +29,7 @@ export default function Login() {
                 return
             }
 
-            localStorage.setItem('logforge_token', result.data.token)
-            localStorage.setItem('logforge_user', JSON.stringify(result.data.user))
-
+            login(result.data.token, result.data.user)
             navigate('/dashboard', { replace: true })
         } catch {
             setError('Unable to connect to the server.')
@@ -40,16 +41,8 @@ export default function Login() {
     return (
         <main className="flex min-h-screen w-full items-center justify-center bg-slate-950 px-4 py-10">
             <div className="w-full max-w-sm">
-                <div className="mb-8 flex items-center gap-2.5">
-                    <span
-                        aria-hidden="true"
-                        className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-600 font-mono text-sm font-bold text-white"
-                    >
-                        L
-                    </span>
-                    <span className="font-mono text-lg font-semibold tracking-tight text-slate-50">
-                        LogForge
-                    </span>
+                <div className="mb-8">
+                    <Brand />
                 </div>
 
                 <div className="rounded-lg border border-slate-800 bg-slate-900 p-6 sm:p-7">

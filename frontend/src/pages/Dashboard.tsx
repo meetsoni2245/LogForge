@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
+import LoadingState from '../components/LoadingState'
 import {
     hourlyActivity as initialHourlyActivity,
     type LogLevel,
 } from '../data/dashboard'
-import { getHourlyStats, getLogs, getStats } from '../services/api'
+import { getHourlyStats, getLogs, getStats, UnauthorizedError } from '../services/api'
+import ErrorState from '../components/ErrorState'
+import { useAuth } from '../hooks/useAuth'
 
 const numberFormat = new Intl.NumberFormat('en-US')
 
@@ -46,53 +49,91 @@ export default function Dashboard() {
         ...hourlyActivity.map((h) => h.info + h.warn + h.error),
         1,
     )
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState('')
+    const { user, logout } = useAuth()
 
     useEffect(() => {
         async function loadDashboardData() {
-            const [statsResult, logsResult, hourlyResult] = await Promise.all([
-                getStats(),
-                getLogs(),
-                getHourlyStats(),
-            ])
+            try {
+                setError('')
+                setIsLoading(true)
+                const [statsResult, logsResult, hourlyResult] = await Promise.all([
+                    getStats(),
+                    getLogs(),
+                    getHourlyStats(),
+                ])
 
-            if (statsResult.success) {
-                setTotalLogs(statsResult.data.totalLogs)
-                setLevelCounts(
-                    (Object.entries(statsResult.data.byLevel) as [LogLevel, number][])
-                        .map(([level, count]) => ({ level, count })),
-                )
-            }
-
-            if (logsResult.success) {
-                setLogs(logsResult.data)
-            }
-            if (hourlyResult.success) {
-                const hourlyData: {
-                    hour: string
-                    info: number
-                    warn: number
-                    error: number
-                }[] = hourlyResult.data
-
-                const normalizedHourlyActivity = initialHourlyActivity.map((bucket) => {
-                    const matchingHour = hourlyData.find(
-                        (item) => new Date(item.hour).getUTCHours() === Number(bucket.hour.slice(0, 2)),
+                if (statsResult.success) {
+                    setTotalLogs(statsResult.data.totalLogs)
+                    setLevelCounts(
+                        (Object.entries(statsResult.data.byLevel) as [LogLevel, number][])
+                            .map(([level, count]) => ({ level, count })),
                     )
+                }
 
-                    return {
-                        ...bucket,
-                        info: matchingHour?.info ?? 0,
-                        warn: matchingHour?.warn ?? 0,
-                        error: matchingHour?.error ?? 0,
-                    }
-                })
+                if (logsResult.success) {
+                    setLogs(logsResult.data)
+                }
 
-                setHourlyActivity(normalizedHourlyActivity)
+                if (hourlyResult.success) {
+                    const hourlyData: {
+                        hour: string
+                        info: number
+                        warn: number
+                        error: number
+                    }[] = hourlyResult.data
+
+                    const normalizedHourlyActivity = initialHourlyActivity.map((bucket) => {
+                        const matchingHour = hourlyData.find(
+                            (item) =>
+                                new Date(item.hour).getUTCHours() ===
+                                Number(bucket.hour.slice(0, 2)),
+                        )
+
+                        return {
+                            ...bucket,
+                            info: matchingHour?.info ?? 0,
+                            warn: matchingHour?.warn ?? 0,
+                            error: matchingHour?.error ?? 0,
+                        }
+                    })
+
+                    setHourlyActivity(normalizedHourlyActivity)
+                }
+                if (!statsResult.success || !logsResult.success || !hourlyResult.success) {
+                    setError('Unable to load dashboard data.')
+                    return
+                }
+            } catch (error) {
+                if (error instanceof UnauthorizedError) {
+                    return
+                }
+
+                setError('Unable to load dashboard data.')
+            } finally {
+                setIsLoading(false)
             }
         }
 
         loadDashboardData()
     }, [])
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen w-full bg-slate-950 text-slate-200">
+                <LoadingState message="Loading dashboard..." />
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen w-full bg-slate-950 text-slate-200">
+                <ErrorState message={error} />
+            </div>
+        )
+    }
 
     return (
         <div className="min-h-screen w-full bg-slate-950 text-slate-200">
@@ -107,9 +148,19 @@ export default function Dashboard() {
                     <span className="font-mono text-lg font-semibold tracking-tight text-slate-50">
                         LogForge
                     </span>
-                    <span className="ml-auto font-mono text-xs text-slate-500">
-                        last 24h
-                    </span>
+                    <div className="ml-auto flex items-center gap-4">
+                        <span className="hidden text-sm text-slate-400 sm:inline">
+                            {user?.username}
+                        </span>
+
+                        <button
+                            type="button"
+                            onClick={logout}
+                            className="rounded-md border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors duration-150 ease-out hover:border-slate-600 hover:bg-slate-800 hover:text-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                        >
+                            Log out
+                        </button>
+                    </div>
                 </div>
             </header>
 

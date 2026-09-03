@@ -1,4 +1,20 @@
-const API_BASE_URL = 'http://localhost:3000/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+
+export class UnauthorizedError extends Error {
+    constructor() {
+        super('Unauthorized')
+        this.name = 'UnauthorizedError'
+    }
+}
+
+async function parseResponse<T>(response: Response): Promise<T> {
+    if (response.status === 401) {
+        window.dispatchEvent(new Event('logforge:unauthorized'))
+        throw new UnauthorizedError()
+    }
+
+    return response.json()
+}
 
 export async function registerUser(username: string, password: string) {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -12,7 +28,17 @@ export async function registerUser(username: string, password: string) {
         }),
     })
 
-    return response.json()
+    return parseResponse<{
+        success: boolean
+        data: {
+            id: string
+            username: string
+            createdAt: string
+        }
+        error?: {
+            message: string
+        }
+    }>(response)
 }
 
 export async function loginUser(username: string, password: string) {
@@ -27,7 +53,20 @@ export async function loginUser(username: string, password: string) {
         }),
     })
 
-    return response.json()
+    return parseResponse<{
+        success: boolean
+        data: {
+            token: string
+            user: {
+                id: string
+                username: string
+                createdAt: string
+            }
+        }
+        error?: {
+            message: string
+        }
+    }>(response)
 }
 
 export async function getStats() {
@@ -47,7 +86,20 @@ export async function getStats() {
         },
     })
 
-    return response.json()
+    return parseResponse<{
+        success: boolean
+        data: {
+            totalLogs: number
+            byLevel: {
+                INFO: number
+                WARN: number
+                ERROR: number
+            }
+        }
+        error?: {
+            message: string
+        }
+    }>(response)
 }
 
 export async function getHourlyStats() {
@@ -70,7 +122,18 @@ export async function getHourlyStats() {
         },
     )
 
-    return response.json()
+    return parseResponse<{
+        success: boolean
+        data: {
+            hour: string
+            info: number
+            warn: number
+            error: number
+        }[]
+        error?: {
+            message: string
+        }
+    }>(response)
 }
 
 export async function getLogs() {
@@ -82,5 +145,17 @@ export async function getLogs() {
         },
     })
 
-    return response.json()
+    return parseResponse<{
+        success: boolean
+        data: {
+            id: string
+            timestamp: string
+            level: 'INFO' | 'WARN' | 'ERROR'
+            message: string
+            createdAt: string
+        }[]
+        error?: {
+            message: string
+        }
+    }>(response)
 }
