@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 import Logs from './pages/Logs'
 import LogDetail from './pages/LogDetail'
+import Ingest from './pages/Ingest'
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/logs" element={<Logs />} />
             <Route path="/logs/:id" element={<LogDetail />} />
+            <Route path="/ingest" element={<Ingest />} />
           </Route>
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Route>

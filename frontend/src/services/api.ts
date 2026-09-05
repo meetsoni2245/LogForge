@@ -248,3 +248,88 @@ export async function deleteLog(id: string) {
         }
     }>(response)
 }
+
+export async function createLog(params: {
+    timestamp: string
+    level: 'INFO' | 'WARN' | 'ERROR'
+    message: string
+}) {
+    const token = localStorage.getItem('logforge_token')
+
+    const response = await fetch(`${API_BASE_URL}/logs`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(params),
+    })
+
+    return parseResponse<{
+        success: boolean
+        data?: {
+            id: string
+            timestamp: string
+            level: 'INFO' | 'WARN' | 'ERROR'
+            message: string
+            createdAt: string
+        }
+        error?: {
+            message: string
+        }
+    }>(response)
+}
+
+export async function createBulkLogs(
+    logs: {
+        timestamp: string
+        level: 'INFO' | 'WARN' | 'ERROR'
+        message: string
+    }[],
+) {
+    const token = localStorage.getItem('logforge_token')
+
+    const response = await fetch(`${API_BASE_URL}/logs/bulk`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ logs }),
+    })
+
+    return parseResponse<{
+        success: boolean
+        data?: unknown
+        error?: {
+            message: string
+        }
+    }>(response)
+}
+
+export async function createRawLog(line: string) {
+    const token = localStorage.getItem('logforge_token')
+
+    const response = await fetch(`${API_BASE_URL}/logs/raw`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ line }),
+    })
+
+    return parseResponse<{
+        success: boolean
+        data?: {
+            id: string
+            timestamp: string
+            level: 'INFO' | 'WARN' | 'ERROR'
+            message: string
+            createdAt: string
+        }
+        error?: {
+            message: string
+        }
+    }>(response)
+}
