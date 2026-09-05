@@ -69,22 +69,30 @@ export async function loginUser(username: string, password: string) {
     }>(response)
 }
 
-export async function getStats() {
+export async function getStats(params?: {
+    from?: string
+    to?: string
+}) {
     const token = localStorage.getItem('logforge_token')
+    const searchParams = new URLSearchParams()
 
-    const to = new Date()
-    const from = new Date(to.getTime() - 24 * 60 * 60 * 1000)
+    if (params?.from) {
+        searchParams.set('from', params.from)
+    }
 
-    const params = new URLSearchParams({
-        from: from.toISOString(),
-        to: to.toISOString(),
-    })
+    if (params?.to) {
+        searchParams.set('to', params.to)
+    }
 
-    const response = await fetch(`${API_BASE_URL}/logs/stats?${params}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
+    const query = searchParams.toString()
+    const response = await fetch(
+        `${API_BASE_URL}/logs/stats${query ? `?${query}` : ''}`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
         },
-    })
+    )
 
     return parseResponse<{
         success: boolean
@@ -102,19 +110,24 @@ export async function getStats() {
     }>(response)
 }
 
-export async function getHourlyStats() {
+export async function getHourlyStats(params?: {
+    from?: string
+    to?: string
+}) {
     const token = localStorage.getItem('logforge_token')
+    const searchParams = new URLSearchParams()
 
-    const to = new Date()
-    const from = new Date(to.getTime() - 24 * 60 * 60 * 1000)
+    if (params?.from) {
+        searchParams.set('from', params.from)
+    }
 
-    const params = new URLSearchParams({
-        from: from.toISOString(),
-        to: to.toISOString(),
-    })
+    if (params?.to) {
+        searchParams.set('to', params.to)
+    }
 
+    const query = searchParams.toString()
     const response = await fetch(
-        `${API_BASE_URL}/logs/stats/hourly?${params}`,
+        `${API_BASE_URL}/logs/stats/hourly${query ? `?${query}` : ''}`,
         {
             headers: {
                 Authorization: `Bearer ${token}`,

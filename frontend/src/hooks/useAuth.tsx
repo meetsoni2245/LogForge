@@ -1,16 +1,9 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
+import { AuthContext } from './authContext'
 import type { User } from '../types/api'
+import type { AuthContextValue } from './authContext'
 
-interface AuthContextValue {
-    token: string | null
-    user: User | null
-    isAuthenticated: boolean
-    login: (token: string, user: User) => void
-    logout: () => void
-}
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 function getStoredUser(): User | null {
     const storedUser = localStorage.getItem('logforge_user')
@@ -76,14 +69,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             {children}
         </AuthContext.Provider>
     )
-}
-
-export function useAuth(): AuthContextValue {
-    const context = useContext(AuthContext)
-
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider')
-    }
-
-    return context
 }

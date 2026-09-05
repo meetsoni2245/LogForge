@@ -1,15 +1,67 @@
-import { useEffect, useState } from 'react'
-import LoadingState from '../components/LoadingState'
+import { useEffect, useRef, useState } from 'react'
 import {
-    hourlyActivity as initialHourlyActivity,
-    type LogLevel,
-} from '../data/dashboard'
+    CartesianGrid,
+    Line,
+    LineChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+} from 'recharts'
+import LoadingState from '../components/LoadingState'
+import type { LogLevel } from '../types/api'
 import { getHourlyStats, getLogs, getStats, UnauthorizedError } from '../services/api'
 import ErrorState from '../components/ErrorState'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth } from '../hooks/useAuthHook'
 import { Link } from 'react-router-dom'
 
 const numberFormat = new Intl.NumberFormat('en-US')
+type DateRangePreset = '24h' | '7d' | '30d' | 'custom'
+
+const dateRangeLabels: Record<DateRangePreset, string> = {
+    '24h': 'Last 24 hours',
+    '7d': 'Last 7 days',
+    '30d': 'Last 30 days',
+    custom: 'Custom range',
+}
+
+function getDateRange(
+    preset: DateRangePreset,
+    customFrom?: string,
+    customTo?: string,
+) {
+    const to = new Date()
+
+    if (preset === 'custom') {
+        return {
+            from: customFrom ? new Date(customFrom).toISOString() : undefined,
+            to: customTo ? new Date(customTo).toISOString() : undefined,
+        }
+    }
+
+    const durations: Record<Exclude<DateRangePreset, 'custom'>, number> = {
+        '24h': 24 * 60 * 60 * 1000,
+        '7d': 7 * 24 * 60 * 60 * 1000,
+        '30d': 30 * 24 * 60 * 60 * 1000,
+    }
+
+    return {
+        from: new Date(to.getTime() - durations[preset]).toISOString(),
+        to: to.toISOString(),
+    }
+}
+const hourFormat = new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'UTC',
+})
+
+function formatHourLabel(value: string): string {
+    return hourFormat.format(new Date(value))
+}
 
 const levelStyles: Record<LogLevel, { text: string; bar: string; badge: string }> = {
     INFO: {
@@ -32,7 +84,13 @@ const levelStyles: Record<LogLevel, { text: string; bar: string; badge: string }
 
 
 export default function Dashboard() {
+    const requestIdRef = useRef(0)
     const [totalLogs, setTotalLogs] = useState(0)
+    const [dateRange, setDateRange] = useState<DateRangePreset>('24h')
+    const [customFrom, setCustomFrom] = useState('')
+    const [customTo, setCustomTo] = useState('')
+    const [appliedCustomFrom, setAppliedCustomFrom] = useState('')
+    const [appliedCustomTo, setAppliedCustomTo] = useState('')
     const [levelCounts, setLevelCounts] = useState<
         { level: LogLevel; count: number }[]
     >([])
@@ -45,25 +103,68 @@ export default function Dashboard() {
             createdAt: string
         }[]
     >([])
-    const [hourlyActivity, setHourlyActivity] = useState(initialHourlyActivity)
+    const [hourlyActivity, setHourlyActivity] = useState<
+        { hour: string; info: number; warn: number; error: number }[]
+    >([])
     const peakHourVolume = Math.max(
         ...hourlyActivity.map((h) => h.info + h.warn + h.error),
         1,
     )
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState('')
+    const [customRangeError, setCustomRangeError] = useState('')
     const { user, logout } = useAuth()
 
     useEffect(() => {
         async function loadDashboardData() {
+            const requestId = ++requestIdRef.current
+            setCustomRangeError('')
+
+            if (dateRange === 'custom') {
+                if (!customFrom || !customTo) {
+                    setCustomRangeError('Please select both a From date and a To date.')
+                    setIsLoading(false)
+                    return
+                }
+
+                const from = new Date(customFrom)
+                const to = new Date(customTo)
+
+                if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+                    setCustomRangeError('Please enter valid dates.')
+                    setIsLoading(false)
+                    return
+                }
+
+                if (from > to) {
+                    setCustomRangeError(
+                        'The From date must be earlier than or equal to the To date.',
+                    )
+                    setIsLoading(false)
+                    return
+                }
+            }
+
+            const range = getDateRange(
+                dateRange,
+                dateRange === 'custom' ? appliedCustomFrom : customFrom,
+                dateRange === 'custom' ? appliedCustomTo : customTo,
+            )
+
             try {
                 setError('')
                 setIsLoading(true)
                 const [statsResult, logsResult, hourlyResult] = await Promise.all([
-                    getStats(),
-                    getLogs(),
-                    getHourlyStats(),
+                    getStats(range),
+                    getLogs({
+                        from: range.from,
+                        to: range.to,
+                    }),
+                    getHourlyStats(range),
                 ])
+                if (requestId !== requestIdRef.current) {
+                    return
+                }
 
                 if (statsResult.success) {
                     setTotalLogs(statsResult.data.totalLogs)
@@ -85,22 +186,7 @@ export default function Dashboard() {
                         error: number
                     }[] = hourlyResult.data
 
-                    const normalizedHourlyActivity = initialHourlyActivity.map((bucket) => {
-                        const matchingHour = hourlyData.find(
-                            (item) =>
-                                new Date(item.hour).getUTCHours() ===
-                                Number(bucket.hour.slice(0, 2)),
-                        )
-
-                        return {
-                            ...bucket,
-                            info: matchingHour?.info ?? 0,
-                            warn: matchingHour?.warn ?? 0,
-                            error: matchingHour?.error ?? 0,
-                        }
-                    })
-
-                    setHourlyActivity(normalizedHourlyActivity)
+                    setHourlyActivity(hourlyData)
                 }
                 if (!statsResult.success || !logsResult.success || !hourlyResult.success) {
                     setError('Unable to load dashboard data.')
@@ -118,7 +204,8 @@ export default function Dashboard() {
         }
 
         loadDashboardData()
-    }, [])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dateRange, appliedCustomFrom, appliedCustomTo])
 
     if (isLoading) {
         return (
@@ -176,6 +263,60 @@ export default function Dashboard() {
                 <p className="mt-1.5 text-sm text-slate-400">
                     Ingestion volume and severity breakdown across your logs.
                 </p>
+                <div className="mt-4 flex flex-wrap items-end gap-2">
+                    {(Object.keys(dateRangeLabels) as DateRangePreset[]).map((preset) => (
+                        <button
+                            key={preset}
+                            type="button"
+                            onClick={() => setDateRange(preset)}
+                            className={`rounded-md px-3 py-2 text-sm font-medium transition ${dateRange === preset
+                                ? 'bg-sky-500 text-white'
+                                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                                }`}
+                        >
+                            {dateRangeLabels[preset]}
+                        </button>
+                    ))}
+
+                    {dateRange === 'custom' && (
+                        <>
+                            <label className="flex flex-col gap-1 text-xs text-slate-400">
+                                From
+                                <input
+                                    type="datetime-local"
+                                    value={customFrom}
+                                    onChange={(event) => setCustomFrom(event.target.value)}
+                                    className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none focus:border-sky-500"
+                                />
+                            </label>
+
+                            <label className="flex flex-col gap-1 text-xs text-slate-400">
+                                To
+                                <input
+                                    type="datetime-local"
+                                    value={customTo}
+                                    onChange={(event) => setCustomTo(event.target.value)}
+                                    className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none focus:border-sky-500"
+                                />
+                            </label>
+                            {customRangeError && (
+                                <p className="w-full text-xs text-rose-400">
+                                    {customRangeError}
+                                </p>
+                            )}
+                        </>
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setAppliedCustomFrom(customFrom)
+                            setAppliedCustomTo(customTo)
+                        }}
+                        className="rounded-md bg-sky-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-sky-400"
+                    >
+                        Apply
+                    </button>
+                </div>
 
                 <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
                     <section
@@ -195,46 +336,77 @@ export default function Dashboard() {
                         <div className="mt-8">
                             <div className="flex items-baseline justify-between">
                                 <h3 className="text-sm font-medium text-slate-300">
-                                    Hourly activity
+                                    Log activity
                                 </h3>
                                 <span className="font-mono text-xs text-slate-500">
                                     peak {numberFormat.format(peakHourVolume)}/h
                                 </span>
                             </div>
 
-                            <ul className="mt-4 flex h-36 items-end gap-[3px] sm:gap-1.5">
-                                {hourlyActivity.map((hour) => {
-                                    const total = hour.info + hour.warn + hour.error
-                                    return (
-                                        <li
-                                            key={hour.hour}
-                                            className="group relative flex h-full flex-1 flex-col justify-end"
-                                            title={`${hour.hour} — ${numberFormat.format(total)} logs (${numberFormat.format(hour.error)} errors)`}
+                            <div className="mt-4 h-64 w-full">
+                                {hourlyActivity.length === 0 ? (
+                                    <div className="flex h-full items-center justify-center text-sm text-slate-500">
+                                        No activity in this range.
+                                    </div>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart
+                                            data={hourlyActivity}
+                                            margin={{ top: 8, right: 8, left: 0, bottom: 8 }}
                                         >
-                                            <div
-                                                className="w-full rounded-t-sm bg-rose-500"
-                                                style={{ height: `${(hour.error / peakHourVolume) * 100}%` }}
+                                            <CartesianGrid
+                                                strokeDasharray="3 3"
+                                                stroke="rgb(51 65 85 / 0.5)"
                                             />
-                                            <div
-                                                className="w-full bg-amber-500"
-                                                style={{ height: `${(hour.warn / peakHourVolume) * 100}%` }}
+                                            <XAxis
+                                                dataKey="hour"
+                                                tickFormatter={formatHourLabel}
+                                                tick={{ fill: 'rgb(100 116 139)', fontSize: 11 }}
+                                                tickLine={false}
+                                                axisLine={false}
                                             />
-                                            <div
-                                                className="w-full bg-sky-600/70 transition-colors duration-150 ease-out group-hover:bg-sky-500"
-                                                style={{ height: `${(hour.info / peakHourVolume) * 100}%` }}
+                                            <YAxis
+                                                allowDecimals={false}
+                                                tick={{ fill: 'rgb(100 116 139)', fontSize: 11 }}
+                                                tickLine={false}
+                                                axisLine={false}
+                                                width={48}
                                             />
-                                            <span className="sr-only">
-                                                {hour.hour}: {numberFormat.format(total)} logs
-                                            </span>
-                                        </li>
-                                    )
-                                })}
-                            </ul>
-
-                            <div className="mt-2 flex justify-between font-mono text-xs text-slate-500">
-                                <span>{hourlyActivity[0].hour}</span>
-                                <span>12:00</span>
-                                <span>{hourlyActivity[hourlyActivity.length - 1].hour}</span>
+                                            <Tooltip
+                                                labelFormatter={(label) => formatHourLabel(String(label))}
+                                                contentStyle={{
+                                                    backgroundColor: 'rgb(15 23 42)',
+                                                    border: '1px solid rgb(51 65 85)',
+                                                    borderRadius: '6px',
+                                                }}
+                                            />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="info"
+                                                name="INFO"
+                                                stroke="rgb(14 165 233)"
+                                                strokeWidth={2}
+                                                dot={false}
+                                            />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="warn"
+                                                name="WARN"
+                                                stroke="rgb(245 158 11)"
+                                                strokeWidth={2}
+                                                dot={false}
+                                            />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="error"
+                                                name="ERROR"
+                                                stroke="rgb(244 63 94)"
+                                                strokeWidth={2}
+                                                dot={false}
+                                            />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                )}
                             </div>
                         </div>
                     </section>

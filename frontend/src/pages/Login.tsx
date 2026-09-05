@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { loginUser } from '../services/api'
 import Brand from '../components/Brand'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth } from '../hooks/useAuthHook'
 
 export default function Login() {
     const navigate = useNavigate()
