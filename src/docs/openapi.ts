@@ -458,6 +458,30 @@ const openApiDocument = {
                 },
             },
         },
+        "/api/logs/stats/hourly": {
+            get: {
+                tags: ["Logs"],
+                summary: "Get hourly log statistics",
+                security: [{ BearerAuth: [] }],
+                parameters: [
+                    { name: "X-Request-Id", in: "header", ...requestIdHeader },
+                    { name: "from", in: "query", schema: { type: "string", format: "date-time" } },
+                    { name: "to", in: "query", schema: { type: "string", format: "date-time" } },
+                ],
+                responses: {
+                    200: jsonResponse(
+                        "Log counts grouped by UTC hour and level.",
+                        successEnvelope({
+                            type: "array",
+                            items: { $ref: "#/components/schemas/HourlyStats" },
+                        }),
+                    ),
+                    400: errorResponse("The query parameters are invalid."),
+                    429: errorResponse("The client has exceeded the API rate limit.", true),
+                    500: errorResponse("Unexpected server error."),
+                },
+            },
+        },
         "/api/logs/{id}": {
             parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
             get: {
@@ -537,6 +561,16 @@ const openApiDocument = {
                             ERROR: { type: "integer", minimum: 0 },
                         },
                     },
+                },
+            },
+            HourlyStats: {
+                type: "object",
+                required: ["hour", "info", "warn", "error"],
+                properties: {
+                    hour: { type: "string", format: "date-time" },
+                    info: { type: "integer", minimum: 0 },
+                    warn: { type: "integer", minimum: 0 },
+                    error: { type: "integer", minimum: 0 },
                 },
             },
             ErrorResponse: errorSchema,
